@@ -1,747 +1,1577 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="theme-color" content="#123b52">
-<title>نقشه‌برداری Sahroud RTK - مهندس احمد نوری</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<title>نقشه برداری Sahroud GPS</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#eef3f6;color:#172b36;font-family:Tahoma,Arial,sans-serif;padding-bottom:30px}
-header{background:linear-gradient(130deg,#123b52,#16778a);color:#fff;padding:16px 15px;box-shadow:0 3px 10px rgba(0,0,0,0.15)}
-header h1{font-size:19px;margin:0 0 4px}
-header p{font-size:12px;margin:0 0 6px;color:#d9edf2}
-.author-badge{display:inline-block;background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:bold;color:#f0f8ff;border:1px solid rgba(255,255,255,0.2)}
 
-main{max-width:1000px;margin:auto;padding:12px}
-.layout{display:grid;grid-template-columns:1fr;gap:12px}
+body{
+ margin:0;
+ background:#eef3f6;
+ color:#172b36;
+ font-family:Tahoma,Arial,sans-serif;
+ padding-bottom:25px;
+}
 
-/* کارت‌ها و بخش‌های کشویی */
-.card{background:#fff;border:1px solid #dce6eb;border-radius:14px;box-shadow:0 2px 7px #123b520b;overflow:hidden;transition:all 0.2s}
-.card-header{padding:14px 16px;background:#fff;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;border-bottom:1px solid transparent}
-.card.open .card-header{border-bottom-color:#edf4f7;background:#fbfdfe}
-.card-header h2{font-size:15px;color:#123b52;margin:0;display:flex;align-items:center;gap:8px}
-.card-header .icon{font-size:12px;color:#16778a;transition:transform 0.3s}
-.card.open .card-header .icon{transform:rotate(180deg)}
-.card-body{padding:14px;display:none}
-.card.open .card-body{display:block}
+header{
+ background:linear-gradient(130deg,#123b52,#16778a);
+ color:white;
+ padding:16px;
+}
 
-/* وضعیت‌های گرید */
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat{background:#f3f7f9;border:1px solid #e0e9ed;border-radius:10px;padding:9px;min-width:0}
-.stat small{display:block;color:#647983;font-size:10.5px;margin-bottom:4px}.stat strong{font-size:13px;overflow-wrap:anywhere;color:#123b52}
-.status{margin-top:10px;padding:10px;border-radius:10px;background:#fff1d9;color:#805000;font-size:11.5px;line-height:1.8}
-.status.good{background:#e5f6eb;color:#126b3c}.status.bad{background:#fdebea;color:#98251d}
+header h1{
+ font-size:19px;
+ margin:0 0 7px;
+}
 
-/* دکمه‌ها و عناصر فرم */
-button,.filelabel{border:0;border-radius:10px;padding:11px 9px;font-family:Tahoma;font-size:12.5px;font-weight:bold;background:#1677a8;color:white;cursor:pointer;min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background 0.2s}
-button:disabled{opacity:.45;cursor:not-allowed}.green{background:#087e75}.green:hover{background:#06635c}.red{background:#aa332a}.gray,.filelabel{background:#e7eff3;color:#123b52;border:1px solid #d5e1e6}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-label{display:block;color:#607782;font-size:11.5px;margin:8px 0 4px}
-input,textarea,select{width:100%;border:1px solid #cbd9df;border-radius:9px;padding:10px;font:12.5px Tahoma;background:white;outline:none}
-input:focus,textarea:focus,select:focus{border-color:#16778a;box-shadow:0 0 0 2px #16778a22}
-textarea{resize:vertical}
-#map{height:320px;border-radius:11px;border:1px solid #dce6eb;z-index:1}
-.note{font-size:11px;line-height:1.8;color:#657b84;margin-top:8px}
-.tablewrap{overflow-x:auto;margin-top:8px}
-table{border-collapse:collapse;width:100%;min-width:760px;font-size:11px}
-th,td{padding:8px 9px;border-bottom:1px solid #e1e9ed;text-align:right;white-space:nowrap}
-th{background:#edf4f7;color:#123b52;font-weight:bold}td button{font-size:10px;padding:5px 8px;min-height:28px;border-radius:6px}
-footer{text-align:center;color:#71848c;font-size:11px;padding:20px 0 10px}
-.result-box{background:#f0f8ff;border:1px solid #b8daff;border-radius:10px;padding:12px;margin-top:10px;font-size:12.5px;line-height:1.9;color:#0c5460}
+header p{
+ font-size:12px;
+ margin:0 0 7px;
+}
 
-/* انتخاب چندتایی کنج‌ها */
-.checkbox-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:170px;overflow-y:auto;border:1px solid #cbd9df;padding:9px;border-radius:9px;background:#fafcfd}
-.checkbox-item{display:flex;align-items:center;gap:6px;font-size:11.5px;background:#fff;padding:6px 8px;border-radius:6px;border:1px solid #e0e8ed;cursor:pointer}
-.checkbox-item input{width:auto;margin:0}
+main{
+ max-width:1000px;
+ margin:auto;
+ padding:12px;
+}
 
-@media(min-width:750px){.layout{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+.card{
+ background:white;
+ border:1px solid #dce6eb;
+ border-radius:13px;
+ padding:14px;
+ margin-bottom:12px;
+ box-shadow:0 2px 7px #123b520b;
+}
+
+h2{
+ font-size:15px;
+ color:#123b52;
+ margin:0 0 12px;
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+}
+
+.stat{
+ background:#f3f7f9;
+ border:1px solid #e0e9ed;
+ border-radius:9px;
+ padding:9px;
+ overflow-wrap:anywhere;
+}
+
+.stat small{
+ display:block;
+ color:#647983;
+ font-size:10px;
+ margin-bottom:5px;
+}
+
+.stat strong{
+ font-size:12px;
+ color:#123b52;
+}
+
+.status{
+ margin-top:10px;
+ padding:10px;
+ border-radius:9px;
+ background:#fff1d9;
+ color:#805000;
+ font-size:12px;
+ line-height:1.8;
+}
+
+.status.good{
+ background:#e5f6eb;
+ color:#126b3c;
+}
+
+.status.bad{
+ background:#fdebea;
+ color:#98251d;
+}
+
+button{
+ border:0;
+ border-radius:9px;
+ padding:11px 8px;
+ font-family:Tahoma;
+ font-size:12px;
+ font-weight:bold;
+ background:#1677a8;
+ color:white;
+ cursor:pointer;
+ min-height:42px;
+}
+
+button:disabled{
+ opacity:.45;
+}
+
+.green{background:#087e75}
+.red{background:#aa332a}
+.gray{
+ background:#e7eff3;
+ color:#123b52;
+ border:1px solid #d5e1e6;
+}
+
+.actions{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+ margin-top:10px;
+}
+
+label{
+ display:block;
+ color:#607782;
+ font-size:12px;
+ margin:9px 0 4px;
+}
+
+input,textarea,select{
+ width:100%;
+ border:1px solid #cbd9df;
+ border-radius:8px;
+ padding:10px;
+ font:12px Tahoma;
+ background:white;
+}
+
+textarea{
+ resize:vertical;
+}
+
+#map{
+ height:320px;
+ border-radius:10px;
+ border:1px solid #dce6eb;
+}
+
+.note{
+ font-size:11px;
+ line-height:1.9;
+ color:#657b84;
+ margin-top:8px;
+}
+
+.tablewrap{
+ overflow-x:auto;
+ margin-top:10px;
+}
+
+table{
+ border-collapse:collapse;
+ width:100%;
+ min-width:750px;
+ font-size:11px;
+}
+
+th,td{
+ padding:8px;
+ border-bottom:1px solid #e1e9ed;
+ text-align:right;
+ white-space:nowrap;
+}
+
+th{
+ background:#edf4f7;
+ color:#123b52;
+}
+
+td button{
+ min-height:30px;
+ padding:5px 8px;
+ font-size:10px;
+}
+
+.filelabel{
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ border-radius:9px;
+ padding:10px;
+ background:#e7eff3;
+ color:#123b52;
+ font-size:12px;
+ font-weight:bold;
+ cursor:pointer;
+}
+
+footer{
+ text-align:center;
+ color:#71848c;
+ font-size:11px;
+ padding:20px 0 10px;
+}
+
+@media(min-width:750px){
+ .layout{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:12px;
+ }
+ .wide{
+ grid-column:1/-1;
+ }
+}
 </style>
 </head>
+
 <body>
+
 <header>
-<h1>نقشه‌برداری Sahroud RTK</h1>
-<p>ثبت نقاط GPS، محاسبه UTM، فاصله، مساحت و خروجی داده‌ها</p>
-<div class="author-badge">تهیه کننده: مهندس احمد نوری</div>
+<h1>نقشه‌برداری Sahroud GPS</h1>
+<p>ثبت نقاط GPS، تبدیل UTM و خروجی نقشه‌برداری</p>
+<div>تهیه کننده: مهندس احمد نوری</div>
 </header>
+
 <main>
+
 <div class="layout">
 
-<!-- وضعیت GPS -->
-<section class="card open" id="card-gps">
-<div class="card-header" onclick="toggleCard('card-gps')">
-<h2>📍 وضعیت GPS و موقعیت‌یا‌بی</h2>
-<span class="icon">▼</span>
-</div>
-<div class="card-body">
+<!-- GPS -->
+
+<section class="card">
+<h2>📍 وضعیت GPS</h2>
+
 <div class="grid">
-<div class="stat"><small>عرض جغرافیایی (Lat)</small><strong id="lat">—</strong></div>
-<div class="stat"><small>طول جغرافیایی (Lon)</small><strong id="lon">—</strong></div>
-<div class="stat"><small>مختصات UTM</small><strong id="utmCurrent">—</strong></div>
-<div class="stat"><small>ارتفاع (متر)</small><strong id="alt">—</strong></div>
-<div class="stat"><small>دقت گزارش‌شده</small><strong id="accuracy">—</strong></div>
-<div class="stat"><small>تعداد نقاط ثبت‌شده</small><strong id="count">۰</strong></div>
+
+<div class="stat">
+<small>عرض جغرافیایی</small>
+<strong id="lat">—</strong>
 </div>
-<div id="gpsStatus" class="status">برای درخواست مجوز و دریافت موقعیت، دکمه «شروع GPS» را بزنید.</div>
-<div class="actions" style="margin-top:10px">
+
+<div class="stat">
+<small>طول جغرافیایی</small>
+<strong id="lon">—</strong>
+</div>
+
+<div class="stat">
+<small>مختصات UTM</small>
+<strong id="utm">—</strong>
+</div>
+
+<div class="stat">
+<small>ارتفاع GPS</small>
+<strong id="alt">—</strong>
+</div>
+
+<div class="stat">
+<small>دقت گزارش‌شده</small>
+<strong id="accuracy">—</strong>
+</div>
+
+<div class="stat">
+<small>تعداد نقاط</small>
+<strong id="count">۰</strong>
+</div>
+
+</div>
+
+<div id="gpsStatus" class="status">
+برای دریافت موقعیت، دکمه شروع GPS را بزنید.
+</div>
+
+<div class="actions">
 <button id="startGPS">شروع GPS</button>
 <button id="stopGPS" class="gray" disabled>توقف GPS</button>
 </div>
-<p class="note">نکته: برنامه را از بستر امن HTTPS اجرا کنید. سیستم به‌صورت خودکار زون UTM (مانند Zone 39N یا 40N) را محاسبه می‌کند.</p>
-</div>
+
+<p class="note">
+برای دریافت موقعیت باید سایت با HTTPS باز شود.
+Location گوشی را روشن کنید و مجوز موقعیت مرورگر را بدهید.
+</p>
+
 </section>
 
-<!-- ثبت نقطه جدید -->
-<section class="card open" id="card-register">
-<div class="card-header" onclick="toggleCard('card-register')">
+<!-- ثبت نقطه -->
+
+<section class="card">
 <h2>➕ ثبت نقطه جدید</h2>
-<span class="icon">▼</span>
-</div>
-<div class="card-body">
-<label for="pointName">نام / کد نقطه</label>
-<input id="pointName" placeholder="مثلاً P1 یا گوشه شمال‌شرقی">
+
+<label for="pointName">نام نقطه</label>
+<input id="pointName" placeholder="مثلاً P1">
+
 <label for="pointNote">توضیحات</label>
-<textarea id="pointNote" rows="2" placeholder="توضیحات تکمیلی درباره نقطه"></textarea>
-<div class="actions" style="margin-top:12px">
-<button id="savePoint" class="green" disabled>ثبت مختصات نقطه</button>
-<button id="clearForm" class="gray">پاک کردن فرم</button>
-</div>
-<div id="qualityInfo" class="note" style="margin-top:8px">ابتدا GPS را فعال کنید.</div>
-</div>
-</section>
+<textarea id="pointNote" rows="2"></textarea>
 
-<!-- محاسبه فاصله بین دو نقطه -->
-<section class="card wide" id="card-dist">
-<div class="card-header" onclick="toggleCard('card-dist')">
-<h2>📏 محاسبه فاصله بین دو نقطه</h2>
-<span class="icon">▼</span>
-</div>
-<div class="card-body">
-<div class="grid">
-<div>
-<label for="p1Select">نقطه مبدأ (نقطه ۱):</label>
-<select id="p1Select"><option value="">-- انتخاب نقطه --</option></select>
-</div>
-<div>
-<label for="p2Select">نقطه مقصد (نقطه ۲):</label>
-<select id="p2Select"><option value="">-- انتخاب نقطه --</option></select>
-</div>
-</div>
-<div class="actions" style="margin-top:12px">
-<button id="calcDistBtn" class="green">محاسبه فاصله</button>
-<button id="clearDistBtn" class="gray">پاک کردن خط روی نقشه</button>
-</div>
-<div id="distResult" class="result-box" style="display:none;"></div>
-<h3 style="font-size:12px;color:#123b52;margin:12px 0 6px;">جدول فواصل محاسبه‌شده</h3>
-<div class="tablewrap">
-<table>
-<thead><tr><th>از نقطه</th><th>به نقطه</th><th>فاصله افقی (۲D)</th><th>اختلاف ارتفاع</th><th>فاصله مستقیم (۳D)</th><th>عملیات</th></tr></thead>
-<tbody id="distTable"><tr><td colspan="6">هنوز فاصله‌ای محاسبه نشده است.</td></tr></tbody>
-</table>
-</div>
-</div>
-</section>
+<div class="actions">
+<button id="savePoint" class="green" disabled>
+ثبت نقطه
+</button>
 
-<!-- محاسبه مساحت زمین محصور بین کنج‌ها -->
-<section class="card wide" id="card-area">
-<div class="card-header" onclick="toggleCard('card-area')">
-<h2>📐 محاسبه مساحت زمین (محصور بین کنج‌ها)</h2>
-<span class="icon">▼</span>
+<button id="clearForm" class="gray">
+پاک کردن فرم
+</button>
 </div>
-<div class="card-body">
-<p style="font-size:12px;color:#49626e;margin-0 0 8px;">کنج‌های زمین را به ترتیب پیمایش (حداقل ۳ نقطه) انتخاب کنید تا مساحت محصور محاسبه شود:</p>
-<div id="cornersContainer" class="checkbox-grid">
-<span style="color:#7f939e;font-size:11px;">هنوز نقطه‌ای ثبت نشده است.</span>
+
+<div id="qualityInfo" class="note">
+ابتدا GPS را فعال کنید.
 </div>
-<div class="actions" style="margin-top:12px">
-<button id="calcAreaBtn" class="green">محاسبه مساحت محصور</button>
-<button id="clearAreaBtn" class="gray">پاک کردن پلی‌گون نقشه</button>
-</div>
-<div id="areaResult" class="result-box" style="display:none;"></div>
-<h3 style="font-size:12px;color:#123b52;margin:12px 0 6px;">تاریخچه محاسبات مساحت</h3>
-<div class="tablewrap">
-<table>
-<thead><tr><th>شماره</th><th>کنج‌های انتخابی</th><th>مساحت (متر مربع)</th><th>مساحت (هکتار)</th><th>محیط (متر)</th><th>عملیات</th></tr></thead>
-<tbody id="areaTable"><tr><td colspan="6">هنوز مساحتی محاسبه نشده است.</td></tr></tbody>
-</table>
-</div>
-</div>
+
 </section>
 
 <!-- نقشه -->
-<section class="card wide open" id="card-map">
-<div class="card-header" onclick="toggleCard('card-map')">
-<h2>🗺️ نقشه نقاط و عوارض برداشت‌شده</h2>
-<span class="icon">▼</span>
-</div>
-<div class="card-body">
+
+<section class="card wide">
+<h2>🗺️ نقشه نقاط</h2>
+
 <div id="map"></div>
-<p class="note">نمایش نقشه نیازمند اینترنت است؛ ثبت مختصات بدون اینترنت نیز انجام می‌شود.</p>
-</div>
+
+<p class="note">
+نقشه آنلاین نیازمند اینترنت است.
+ثبت نقاط GPS بدون اینترنت نیز امکان‌پذیر است.
+</p>
 </section>
 
-<!-- مدیریت پروژه و دانلود -->
-<section class="card wide" id="card-export">
-<div class="card-header" onclick="toggleCard('card-export')">
-<h2>💾 مدیریت پروژه، خروجی و ذخیره‌سازی</h2>
-<span class="icon">▼</span>
-</div>
-<div class="card-body">
+<!-- فاصله -->
+
+<section class="card wide">
+<h2>📏 محاسبه فاصله</h2>
+
+<label>نقطه اول</label>
+<select id="point1">
+<option value="">انتخاب نقطه</option>
+</select>
+
+<label>نقطه دوم</label>
+<select id="point2">
+<option value="">انتخاب نقطه</option>
+</select>
+
 <div class="actions">
-<button class="gray" id="csv">دانلود CSV</button>
-<button class="gray" id="geojson">دانلود GeoJSON</button>
-<button class="gray" id="kml">دانلود KML</button>
-<button class="gray" id="txt">دانلود TXT جامع</button>
-<button class="gray" id="backup">پشتیبان JSON</button>
-<label class="filelabel" style="text-align:center">بازیابی پشتیبان<input id="restore" type="file" accept=".json,application/json" hidden></label>
+<button id="calcDistance" class="green">
+محاسبه فاصله
+</button>
+
+<button id="clearDistance" class="gray">
+پاک کردن نتیجه
+</button>
 </div>
-<button class="red" id="deleteAll" style="width:100%;margin-top:10px">حذف تمام نقاط و محاسبات</button>
-<p class="note">نکته دانلود در موبایل: هنگام دانلود در مرورگر گوشی، فایل‌ها با نام فولدر سفارشی در مسیر <b>Downloads/sahroud_app/</b> ذخیره می‌شوند.</p>
+
+<div id="distanceResult" class="status" style="display:none"></div>
+</section>
+
+<!-- مساحت -->
+
+<section class="card wide">
+<h2>📐 محاسبه مساحت زمین</h2>
+
+<p class="note">
+حداقل سه نقطه را به ترتیب دور زمین انتخاب کنید.
+</p>
+
+<div id="cornerList"></div>
+
+<div class="actions">
+<button id="calcArea" class="green">
+محاسبه مساحت
+</button>
+
+<button id="clearArea" class="gray">
+پاک کردن نقشه
+</button>
 </div>
+
+<div id="areaResult" class="status" style="display:none"></div>
 </section>
 
 <!-- جدول نقاط -->
-<section class="card wide open" id="card-table">
-<div class="card-header" onclick="toggleCard('card-table')">
-<h2>📋 جدول تمام نقاط برداشت‌شده</h2>
-<span class="icon">▼</span>
-</div>
-<div class="card-body">
+
+<section class="card wide">
+<h2>📋 جدول نقاط</h2>
+
 <div class="tablewrap">
 <table>
+
 <thead>
 <tr>
 <th>شماره</th>
-<th>نام نقطه</th>
-<th>UTM (East, North, Zone)</th>
-<th>عرض (Lat)</th>
-<th>طول (Lon)</th>
+<th>نام</th>
+<th>UTM</th>
+<th>Lat</th>
+<th>Lon</th>
 <th>ارتفاع</th>
-<th>دقت GPS</th>
-<th>زمان ثبت</th>
+<th>دقت</th>
+<th>زمان</th>
 <th>عملیات</th>
 </tr>
 </thead>
+
 <tbody id="pointTable">
-<tr><td colspan="9">هنوز نقطه‌ای ثبت نشده است.</td></tr>
+<tr>
+<td colspan="9">هنوز نقطه‌ای ثبت نشده است.</td>
+</tr>
 </tbody>
+
 </table>
-</div>
 </div>
 </section>
 
+<!-- ذخیره -->
+
+<section class="card wide">
+<h2>💾 ذخیره پروژه</h2>
+
+<label for="fileName">
+نام فایل پروژه
+</label>
+
+<input id="fileName" value="Sahroud_Survey">
+
+<div class="actions">
+
+<button id="saveJSON" class="green">
+ذخیره پروژه JSON
+</button>
+
+<button id="saveCSV" class="gray">
+دانلود CSV
+</button>
+
+<label class="filelabel">
+بازیابی فایل JSON
+<input id="restore" type="file" accept=".json,application/json" hidden>
+</label>
+
+<button id="deleteAll" class="red">
+حذف همه نقاط
+</button>
+
 </div>
+
+<p class="note">
+قبل از دانلود، برنامه نام فایل را می‌پرسد.
+محل ذخیره نهایی به مرورگر بستگی دارد.
+برای انتخاب پوشه، قابلیت ذخیره فایل مرورگر باید پشتیبانی شود.
+</p>
+
+</section>
+
+</div>
+
 <footer>
-<b>نقشه‌برداری Sahroud RTK</b> — تهیه کننده: مهندس احمد نوری
+نقشه‌برداری Sahroud GPS — مهندس احمد نوری
 </footer>
+
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
 "use strict";
-const $` = id => document.getElementById(id);
 
-// کلیدهای حافظه محلی
-const STORAGE_KEY = "sahroud_rtk_points_v4";
-const DIST_STORAGE_KEY = "sahroud_rtk_distances_v2";
-const AREA_STORAGE_KEY = "sahroud_rtk_areas_v1";
+/* ===============================
+   تنظیمات
+================================ */
 
-let currentPosition = null, watchID = null;
-let points = [], calculatedDistances = [], calculatedAreas = [];
-let map = null, markers = [], polyline = null, polygonOverlay = null;
+const $ = id => document.getElementById(id);
 
-// آکاردئون (باز و بستن کارت‌ها)
-function toggleCard(cardId) {
-const card = `$(cardId);
-if(card) card.classList.toggle('open');
+const STORAGE_KEY = "sahroud_gps_points_v5";
+
+let points = [];
+let currentPosition = null;
+let watchID = null;
+
+let map = null;
+let markers = [];
+let distanceLine = null;
+let areaPolygon = null;
+
+let gpsVoicePlayed = false;
+
+/* ===============================
+   صدای فارسی
+================================ */
+
+function speak(text){
+
+ if(!("speechSynthesis" in window)){
+   return;
+ }
+
+ speechSynthesis.cancel();
+
+ const speech = new SpeechSynthesisUtterance(text);
+
+ speech.lang = "fa-IR";
+ speech.rate = 0.9;
+ speech.pitch = 1;
+
+ speechSynthesis.speak(speech);
 }
 
-// مبدل مختصات جغرافیایی به UTM (WGS84)
-function LatLonToUTM(lat, lon) {
-const a = 6378137.0; // WGS84 semi-major axis
-const f = 1 / 298.257223563; // flattening
-const b = a * (1 - f);
-const e2 = (aa - bb) / (aa);
-const ePrime2 = (aa - bb) / (bb);
-const k0 = 0.9996;
+/* ===============================
+   وضعیت
+================================ */
 
-let LatRad = lat * Math.PI / 180;
-let LongRad = lon * Math.PI / 180;
+function setStatus(message,type=""){
 
-let ZoneNumber = Math.floor((lon + 180) / 6) + 1;
-if (lat >= 56.0 && lat < 64.0 && lon >= 3.0 && lon < 12.0) ZoneNumber = 32;
+ $("gpsStatus").textContent = message;
 
-// Special zones for Svalbard
-if (lat >= 72.0 && lat < 84.0) {
-if (lon >= 0.0 && lon < 9.0) ZoneNumber = 31;
-else if (lon >= 9.0 && lon < 21.0) ZoneNumber = 33;
-else if (lon >= 21.0 && lon < 33.0) ZoneNumber = 35;
-else if (lon >= 33.0 && lon < 42.0) ZoneNumber = 37;
+ $("gpsStatus").className = "status";
+
+ if(type){
+   $("gpsStatus").classList.add(type);
+ }
 }
 
-let LongOrigin = (ZoneNumber - 1) * 6 - 180 + 3;
-let LongOriginRad = LongOrigin * Math.PI / 180;
+/* ===============================
+   تبدیل UTM
+================================ */
 
-let N = a / Math.sqrt(1 - e2 * Math.sin(LatRad) * Math.sin(LatRad));
-let T = Math.tan(LatRad) * Math.tan(LatRad);
-let C = ePrime2 * Math.cos(LatRad) * Math.cos(LatRad);
-let A = Math.cos(LatRad) * (LongRad - LongOriginRad);
+function latLonToUTM(lat,lon){
 
-let M = a * ((1 - e2/4 - 3e2e2/64 - 5e2e2e2/256) * LatRad
-- (3e2/8 + 3e2e2/32 + 45e2e2e2/1024) * Math.sin(2LatRad)
-+ (15e2e2/256 + 45e2e2e2/1024) * Math.sin(4LatRad)
-- (35e2e2e2/3072) * Math.sin(6LatRad));
+ const a = 6378137;
+ const f = 1/298.257223563;
+ const e2 = f*(2-f);
+ const ep2 = e2/(1-e2);
+ const k0 = 0.9996;
 
-let UTMEasting = (k0 * N * (A + (1-T+C)AAA/6
-+ (5-18T+TT+72C-58ePrime2)AAAAA/120) + 500000.0);
+ let zone = Math.floor((lon+180)/6)+1;
 
-let UTMNorthing = (k0 * (M + N * Math.tan(LatRad) * (AA/2 + (5-T+9C+4CC)AAAA/24
-+ (61-58T+TT+600C-330ePrime2)AAAAAA/720)));
+ zone = Math.max(1,Math.min(60,zone));
 
-if (lat < 0) UTMNorthing += 10000000.0; // hemisphere offset
+ const lonOrigin = (zone-1)*6-180+3;
 
-let zoneLetter = (lat >= 0) ? 'N' : 'S';
+ const phi = lat*Math.PI/180;
+ const lambda = lon*Math.PI/180;
+ const lambda0 = lonOrigin*Math.PI/180;
 
-return {
-easting: UTMEasting,
-northing: UTMNorthing,
-zone: ZoneNumber + zoneLetter,
-formatted: ${UTMEasting.toFixed(2)} E, ${UTMNorthing.toFixed(2)} N (${ZoneNumber}${zoneLetter})
-};
+ const sinPhi = Math.sin(phi);
+ const cosPhi = Math.cos(phi);
+ const tanPhi = Math.tan(phi);
+
+ const N = a/Math.sqrt(1-e2*sinPhi*sinPhi);
+
+ const T = tanPhi*tanPhi;
+ const C = ep2*cosPhi*cosPhi;
+
+ const A = cosPhi*(lambda-lambda0);
+
+ const e4 = e2*e2;
+ const e6 = e4*e2;
+
+ const M = a*(
+ (1-e2/4-3*e4/64-5*e6/256)*phi
+ -(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)
+ +(15*e4/256+45*e6/1024)*Math.sin(4*phi)
+ -(35*e6/3072)*Math.sin(6*phi)
+ );
+
+ const E = 500000+k0*N*(
+ A
+ +(1-T+C)*Math.pow(A,3)/6
+ +(5-18*T+T*T+72*C-58*ep2)*Math.pow(A,5)/120
+ );
+
+ let north = k0*(
+ M+N*tanPhi*(
+ Math.pow(A,2)/2
+ +(5-T+9*C+4*C*C)*Math.pow(A,4)/24
+ +(61-58*T+T*T+600*C-330*ep2)*Math.pow(A,6)/720
+ )
+ );
+
+ if(lat<0){
+   north+=10000000;
+ }
+
+ const hemisphere = lat>=0?"N":"S";
+
+ return {
+   easting:E,
+   northing:north,
+   zone:zone+hemisphere,
+   formatted:
+     E.toFixed(2)+" E, "+
+     north.toFixed(2)+" N, Zone "+
+     zone+hemisphere
+ };
 }
 
-// محاسبه فاصله هاورسین (افقی 2D)
-function haversineDistance(lat1, lon1, lat2, lon2) {
-const R = 6371000;
-const dLat = (lat2 - lat1) * Math.PI / 180;
-const dLon = (lon2 - lon1) * Math.PI / 180;
-const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-Math.sin(dLon/2) * Math.sin(dLon/2);
-const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-return R * c;
+/* ===============================
+   فاصله
+================================ */
+
+function distance2D(p1,p2){
+
+ const R=6371000;
+
+ const dLat=(p2.lat-p1.lat)*Math.PI/180;
+ const dLon=(p2.lon-p1.lon)*Math.PI/180;
+
+ const a=
+ Math.sin(dLat/2)**2+
+ Math.cos(p1.lat*Math.PI/180)*
+ Math.cos(p2.lat*Math.PI/180)*
+ Math.sin(dLon/2)**2;
+
+ return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
-// محاسبه مساحت متضلع به روش Shoelace روی مختصات UTM
-function calculatePolygonAreaUTM(selectedPoints) {
-if (selectedPoints.length < 3) return { area: 0, perimeter: 0 };
-
-let utmList = selectedPoints.map(p => LatLonToUTM(p.lat, p.lon));
-let n = utmList.length;
-let areaSum = 0;
-let perimeter = 0;
-
-for (let i = 0; i < n; i++) {
-let j = (i + 1) % n;
-areaSum += (utmList[i].easting * utmList[j].northing);
-areaSum -= (utmList[j].easting * utmList[i].northing);
-
-// محاسبه محیط
-let dx = utmList[j].easting - utmList[i].easting;
-let dy = utmList[j].northing - utmList[i].northing;
-perimeter += Math.sqrt(dxdx + dydy);
-}
-
-let area = Math.abs(areaSum) / 2.0;
-return { area: area, perimeter: perimeter };
-}
-
-function setStatus(message, type=""){ ("gpsStatus").textContent=message; }
-
-function loadPoints(){
-try { points=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); } catch(e){ points=[]; }
-try { calculatedDistances=JSON.parse(localStorage.getItem(DIST_STORAGE_KEY)||"[]"); } catch(e){ calculatedDistances=[]; }
-try { calculatedAreas=JSON.parse(localStorage.getItem(AREA_STORAGE_KEY)||"[]"); } catch(e){ calculatedAreas=[]; }
-}
+/* ===============================
+   ذخیره
+================================ */
 
 function saveStorage(){
-try {
-localStorage.setItem(STORAGE_KEY,JSON.stringify(points));
-localStorage.setItem(DIST_STORAGE_KEY,JSON.stringify(calculatedDistances));
-localStorage.setItem(AREA_STORAGE_KEY,JSON.stringify(calculatedAreas));
-$`("count").textContent=points.length;
-return true;
-} catch(e){ alert("ذخیره‌سازی با خطا مواجه شد؛ حافظه کافی نیست."); return false; }
+
+ try{
+
+   localStorage.setItem(
+     STORAGE_KEY,
+     JSON.stringify(points)
+   );
+
+   $("count").textContent=points.length;
+
+   return true;
+
+ }catch(error){
+
+   alert("ذخیره اطلاعات انجام نشد.");
+
+   return false;
+ }
 }
 
-function fmt(v,d=7){ return Number.isFinite(Number(v))?Number(v).toFixed(d):"ناموجود"; }
-
-function accuracyDescription(p){
-if(!p || !Number.isFinite(p.accuracy)) return "دقت توسط دستگاه گزارش نشده است.";
-return "دقت افقی گوشی: حدود "+p.accuracy.toFixed(2)+" متر (غیر RTK مستقیم).";
-}
+/* ===============================
+   GPS
+================================ */
 
 function startGPS(){
-if(!window.isSecureContext){setStatus("صفحه در بستر امن HTTPS اجرا نشده است.", "bad");return;}
-if(!navigator.geolocation){setStatus("دستگاه از GPS پشتیبانی نمی‌کند.", "bad");return;}
-if(watchID!null)return;
-$("startGPS").disabled=true; setStatus("در حال دریافت موقعیت..."); watchID=navigator.geolocation.watchPosition(pos=&gt;{ const c=pos.coords; const utm = LatLonToUTM(c.latitude, c.longitude); currentPosition={ lat:c.latitude, lon:c.longitude, alt:c.altitude, accuracy:c.accuracy, speed:c.speed, timestamp:pos.timestamp, utm: utm }; $("lat").textContent=fmt(c.latitude);
-$("lon").textContent=fmt(c.longitude); $("utmCurrent").textContent=utm.formatted;
-$("alt").textContent=c.altitude==null?"ناموجود":fmt(c.altitude,2); $("accuracy").textContent=c.accuracynull?"ناموجود":c.accuracy.toFixed(2)+" متر";
-$("qualityInfo").textContent=accuracyDescription(currentPosition); $("savePoint").disabled=false;
-setStatus("موقعیت دریافت شد. "+accuracyDescription(currentPosition),"good");
-if(map && markers.length===0) map.setView([c.latitude,c.longitude],16);
-},err=>{
-const msgs={1:"مجوز موقعیت رد شد.",2:"موقعیت در دسترس نیست.",3:"زمان دریافت موقعیت به پایان رسید."};
-setStatus(msgs[err.code]||("خطای GPS: "+err.message),"bad");
-watchID=null; $("startGPS").disabled=false; $("stopGPS").disabled=true;
-},{enableHighAccuracy:true,maximumAge:0,timeout:30000});
-`$("stopGPS").disabled=false;
+
+ if(!window.isSecureContext){
+
+   setStatus(
+     "سایت HTTPS نیست. سایت را از GitHub Pages باز کنید.",
+     "bad"
+   );
+
+   return;
+ }
+
+ if(!navigator.geolocation){
+
+   setStatus(
+     "مرورگر از GPS پشتیبانی نمی‌کند.",
+     "bad"
+   );
+
+   return;
+ }
+
+ if(watchID!==null){
+   return;
+ }
+
+ $("startGPS").disabled=true;
+
+ setStatus("در انتظار دریافت موقعیت GPS...");
+
+ watchID=navigator.geolocation.watchPosition(
+
+ function(position){
+
+   const c=position.coords;
+
+   currentPosition={
+
+     lat:c.latitude,
+     lon:c.longitude,
+     alt:c.altitude,
+     accuracy:c.accuracy,
+     timestamp:position.timestamp
+
+   };
+
+   const utm=latLonToUTM(
+     c.latitude,
+     c.longitude
+   );
+
+   $("lat").textContent=c.latitude.toFixed(7);
+
+   $("lon").textContent=c.longitude.toFixed(7);
+
+   $("utm").textContent=utm.formatted;
+
+   $("alt").textContent=
+     c.altitude===null
+     ?"ناموجود"
+     :c.altitude.toFixed(2)+" متر";
+
+   $("accuracy").textContent=
+     c.accuracy.toFixed(2)+" متر";
+
+   $("qualityInfo").textContent=
+     "دقت گزارش‌شده گوشی: "+
+     c.accuracy.toFixed(2)+
+     " متر. این مقدار تضمین دقت واقعی نیست.";
+
+   $("savePoint").disabled=false;
+
+   $("stopGPS").disabled=false;
+
+   setStatus(
+     "موقعیت GPS دریافت شد. دقت گزارش‌شده: "+
+     c.accuracy.toFixed(2)+" متر",
+     "good"
+   );
+
+   if(map && points.length===0){
+
+     map.setView(
+       [c.latitude,c.longitude],
+       17
+     );
+
+   }
+
+   if(!gpsVoicePlayed){
+
+     speak("موقعیت جی پی اس پیدا شد");
+
+     gpsVoicePlayed=true;
+
+   }
+
+ },
+
+ function(error){
+
+   let message="خطای دریافت موقعیت GPS";
+
+   if(error.code===1){
+
+     message="مجوز موقعیت رد شد. مجوز Location را فعال کنید.";
+
+   }else if(error.code===2){
+
+     message="موقعیت در دسترس نیست. GPS گوشی را بررسی کنید.";
+
+   }else if(error.code===3){
+
+     message="زمان دریافت موقعیت تمام شد. دوباره تلاش کنید.";
+
+   }
+
+   setStatus(message,"bad");
+
+   watchID=null;
+
+   $("startGPS").disabled=false;
+
+   $("stopGPS").disabled=true;
+
+ },
+
+ {
+
+   enableHighAccuracy:true,
+   maximumAge:0,
+   timeout:30000
+
+ }
+
+ );
+
 }
+
+/* ===============================
+   توقف GPS
+================================ */
 
 function stopGPS(){
-if(watchID!==null)navigator.geolocation.clearWatch(watchID);
-watchID=null; ("startGPS").disabled=false;
-setStatus("دریافت GPS متوقف شد.");
+
+ if(watchID!==null){
+
+   navigator.geolocation.clearWatch(watchID);
+
+ }
+
+ watchID=null;
+
+ $("startGPS").disabled=false;
+
+ $("stopGPS").disabled=true;
+
+ setStatus("GPS متوقف شد.");
+
 }
 
-function esc(s){return String(s??"").replace(/[&<>"']/g,ch=>({"&":"&","<":"<",">":">",'"':""","'":"'"}[ch]));}
-
-function initMap(){
-if(!window.L){$`("map").innerHTML="<p style='padding:12px'>نقشه آنلاین بارگذاری نشد.</p>";return;}
-map=L.map("map").setView([35.463,54.976],12);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap | مهندس احمد نوری"}).addTo(map);
-drawMarkers();
-}
-
-function drawMarkers(){
-if(!map)return;
-markers.forEach(m=>map.removeLayer(m));markers=[];
-points.forEach(p=>{
-const utmStr = p.utm ? p.utm.formatted : LatLonToUTM(p.lat, p.lon).formatted;
-const m=L.marker([p.lat,p.lon]).addTo(map).bindPopup(<b&gt;${esc(p.name||("نقطه "+p.id))}</b><br>UTM: {fmt(p.lat)}<br>Lon: {p.alt?fmt(p.alt,2):'ناموجود'}`);
-markers.push(m);
-});
-}
-
-function updateControls(){
-// به‌روزرسانی منوهای کشویی فاصله
-const p1 = ("p2Select");
-const v1 = p1.value, v2 = p2.value;
-const opts = '<option value="">-- انتخاب نقطه --</option>' + points.map(p=><option value="${p.id}">نقطه ${p.id} ${p.name?'('+esc(p.name)+')':''}</option>`).join("");
-p1.innerHTML = opts; p2.innerHTML = opts;
-p1.value = v1; p2.value = v2;
-
-// به‌روزرسانی چک‌باکس‌های کنج‌ها برای مساحت
-const cornersDiv = $("cornersContainer"); if(!points.length){ cornersDiv.innerHTML = '&lt;span style="color:#7f939e;font-size:11px;"&gt;هنوز نقطه‌ای ثبت نشده است.&lt;/span&gt;'; return; } cornersDiv.innerHTML = points.map(p =&gt;
-<label class="checkbox-item">
-<input type="checkbox" class="corner-chk" value="{p.id} ${p.name?'('+esc(p.name)+')':''}&lt;/span&gt; &lt;/label&gt;).join("");
-}
-
-function renderTable(){
-$("count").textContent=points.length; updateControls(); if(!points.length){$("pointTable").innerHTML='<tr><td colspan="9">هنوز نقطه‌ای ثبت نشده است.</td></tr>';return;}
-$("pointTable").innerHTML=points.map(p=&gt;{ const utmStr = p.utm ? p.utm.formatted : LatLonToUTM(p.lat, p.lon).formatted; return<tr>
-<td>{esc(p.name||"—")}</td>
-<td><strong>{fmt(p.lat)}</td>
-<td>{p.alt==null?"—":fmt(p.alt,2)}</td>
-<td>{esc(p.time||"")}</td>
-<td><button class="gray" onclick="showPoint({Number(p.id)})">حذف</button></td>
-</tr>`;
-}).join("");
-}
-
-function renderDistTable(){
-if(!calculatedDistances.length){
-latex
-("distTable").innerHTML='&lt;tr&gt;&lt;td colspan="6"&gt;هنوز فاصله‌ای محاسبه نشده است.&lt;/td&gt;&lt;/tr&gt;'; return; } 
-
-("distTable").innerHTML = calculatedDistances.map((d, index)=><tr&gt; &lt;td&gt;نقطه ${d.p1Id} (${esc(d.p1Name)})&lt;/td&gt; &lt;td&gt;نقطه ${d.p2Id} (${esc(d.p2Name)})&lt;/td&gt; &lt;td&gt;&lt;strong&gt;${d.dist2D.toFixed(2)} متر</strong> (${(d.dist2D/1000).toFixed(3)} کیلومتر)&lt;/td&gt; &lt;td&gt;${d.diffAlt !== null ? d.diffAlt.toFixed(2) + " متر" : "ناموجود"}</td>
-<td>${d.dist3D !== null ? d.dist3D.toFixed(2) + " متر" : "ناموجود"}&lt;/td&gt; &lt;td&gt;&lt;button class="red" onclick="deleteDist(${index})">حذف</button></td>
-</tr>`).join("");
-}
-
-function renderAreaTable(){
-if(!calculatedAreas.length){
-$("areaTable").innerHTML='&lt;tr&gt;&lt;td colspan="6"&gt;هنوز مساحتی محاسبه نشده است.&lt;/td&gt;&lt;/tr&gt;'; return; } $("areaTable").innerHTML = calculatedAreas.map((a, index)=><tr&gt; &lt;td&gt;${index+1}</td>
-<td>{a.area.toFixed(2)} م²</strong></td>
-<td>{a.perimeter.toFixed(2)} متر</td>
-<td><button class="red" onclick="deleteArea(${index})"&gt;حذف&lt;/button&gt;&lt;/td&gt; &lt;/tr>).join("");
-}
+/* ===============================
+   ثبت نقطه
+================================ */
 
 function registerPoint(){
-if(!currentPosition){alert("ابتدا GPS را روشن کنید و منتظر موقعیت بمانید.");return;}
-const utm = LatLonToUTM(currentPosition.lat, currentPosition.lon);
-const p={
-id: points.length ? Math.max(...points.map(x=>Number(x.id)||0))+1 : 1,
-name: $("pointName").value.trim(), note: $("pointNote").value.trim(),
-lat: currentPosition.lat,
-lon: currentPosition.lon,
-alt: currentPosition.alt,
-accuracy: currentPosition.accuracy,
-utm: utm,
-time: new Date(currentPosition.timestamp).toLocaleString("fa-IR"),
-author: "مهندس احمد نوری"
-};
-points.push(p);
-if(!saveStorage()){points.pop();return;}
-renderTable();drawMarkers();
-if(map){map.setView([p.lat,p.lon],18);markers[markers.length-1]?.openPopup();}
-$("pointName").value="";$("pointNote").value="";
-alert("نقطه شماره "+p.id+" با موفقیت ثبت شد.");
+
+ if(!currentPosition){
+
+   alert("ابتدا GPS را فعال کنید.");
+
+   return;
+ }
+
+ const utm=latLonToUTM(
+   currentPosition.lat,
+   currentPosition.lon
+ );
+
+ const id=points.length
+   ?Math.max(...points.map(p=>p.id))+1
+   :1;
+
+ const point={
+
+   id:id,
+
+   name:$("pointName").value.trim(),
+
+   note:$("pointNote").value.trim(),
+
+   lat:currentPosition.lat,
+
+   lon:currentPosition.lon,
+
+   alt:currentPosition.alt,
+
+   accuracy:currentPosition.accuracy,
+
+   utm:utm,
+
+   time:new Date(
+     currentPosition.timestamp
+   ).toLocaleString("fa-IR")
+
+ };
+
+ points.push(point);
+
+ if(!saveStorage()){
+
+   points.pop();
+
+   return;
+
+ }
+
+ renderPoints();
+
+ $("pointName").value="";
+
+ $("pointNote").value="";
+
+ setStatus(
+   "نقطه شماره "+id+" ثبت شد.",
+   "good"
+ );
+
+ speak("نقطه ثبت شد");
+
 }
+
+/* ===============================
+   جدول
+================================ */
+
+function escapeHTML(value){
+
+ return String(value??"").replace(
+   /[&<>"']/g,
+   function(ch){
+
+     return {
+
+       "&":"&amp;",
+       "<":"&lt;",
+       ">":"&gt;",
+       '"':"&quot;",
+       "'":"&#39;"
+
+     }[ch];
+
+   }
+ );
+
+}
+
+function renderPoints(){
+
+ $("count").textContent=points.length;
+
+ updatePointSelectors();
+
+ updateCornerList();
+
+ if(points.length===0){
+
+   $("pointTable").innerHTML=
+   '<tr><td colspan="9">هنوز نقطه‌ای ثبت نشده است.</td></tr>';
+
+ }else{
+
+   $("pointTable").innerHTML=points.map(p=>{
+
+     const utm=p.utm||
+       latLonToUTM(p.lat,p.lon);
+
+     return `
+     <tr>
+
+     <td>${p.id}</td>
+
+     <td>${escapeHTML(p.name||"—")}</td>
+
+     <td>${escapeHTML(utm.formatted)}</td>
+
+     <td>${p.lat.toFixed(7)}</td>
+
+     <td>${p.lon.toFixed(7)}</td>
+
+     <td>${p.alt===null?"—":Number(p.alt).toFixed(2)}</td>
+
+     <td>${Number(p.accuracy).toFixed(2)}</td>
+
+     <td>${escapeHTML(p.time)}</td>
+
+     <td>
+
+     <button class="gray"
+       onclick="showPoint(${p.id})">
+       نمایش
+     </button>
+
+     <button class="red"
+       onclick="deletePoint(${p.id})">
+       حذف
+     </button>
+
+     </td>
+
+     </tr>`;
+
+   }).join("");
+
+ }
+
+ drawMarkers();
+
+}
+
+/* ===============================
+   انتخاب نقاط فاصله
+================================ */
+
+function updatePointSelectors(){
+
+ const old1=$("point1").value;
+ const old2=$("point2").value;
+
+ const options=
+ '<option value="">انتخاب نقطه</option>'+
+ points.map(p=>
+ `<option value="${p.id}">
+ ${p.id} - ${escapeHTML(p.name||"")}
+ </option>`
+ ).join("");
+
+ $("point1").innerHTML=options;
+ $("point2").innerHTML=options;
+
+ $("point1").value=old1;
+ $("point2").value=old2;
+
+}
+
+/* ===============================
+   نمایش نقاط
+================================ */
+
+function drawMarkers(){
+
+ if(!map)return;
+
+ markers.forEach(m=>map.removeLayer(m));
+
+ markers=[];
+
+ points.forEach(p=>{
+
+   const marker=L.marker(
+     [p.lat,p.lon]
+   ).addTo(map);
+
+   marker.bindPopup(
+     "<b>"+escapeHTML(p.name||("نقطه "+p.id))+"</b><br>"+
+     escapeHTML(p.utm.formatted)
+   );
+
+   markers.push(marker);
+
+ });
+
+}
+
+window.showPoint=function(id){
+
+ const p=points.find(x=>x.id===id);
+
+ if(!p || !map)return;
+
+ map.setView([p.lat,p.lon],19);
+
+ const marker=markers.find(
+   m=>m.getLatLng().lat===p.lat
+ );
+
+ if(marker){
+
+   marker.openPopup();
+
+ }
+
+};
+
+window.deletePoint=function(id){
+
+ if(!confirm("این نقطه حذف شود؟"))return;
+
+ points=points.filter(p=>p.id!==id);
+
+ saveStorage();
+
+ renderPoints();
+
+};
+
+/* ===============================
+   فاصله
+================================ */
 
 function calculateDistance(){
-const id1 = Number($("p1Select").value); const id2 = Number($("p2Select").value);
-if(!id1 || !id2){ alert("لطفاً هر دو نقطه را انتخاب کنید."); return; }
-if(id1 === id2){ alert("لطفاً دو نقطه متفاوت را انتخاب کنید."); return; }
 
-const pt1 = points.find(p => Number(p.id) === id1);
-const pt2 = points.find(p => Number(p.id) === id2);
+ const id1=Number($("point1").value);
+ const id2=Number($("point2").value);
 
-if(!pt1 || !pt2){ alert("اطلاعات نقاط یافت نشد."); return; }
+ const p1=points.find(p=>p.id===id1);
+ const p2=points.find(p=>p.id===id2);
 
-const dist2D = haversineDistance(pt1.lat, pt1.lon, pt2.lat, pt2.lon);
-let diffAlt = null, dist3D = null;
+ if(!p1||!p2){
 
-if(pt1.alt !== null && pt2.alt !== null && Number.isFinite(pt1.alt) && Number.isFinite(pt2.alt)){
-diffAlt = Math.abs(pt1.alt - pt2.alt);
-dist3D = Math.sqrt(Math.pow(dist2D, 2) + Math.pow(diffAlt, 2));
+   alert("دو نقطه انتخاب کنید.");
+
+   return;
+ }
+
+ if(id1===id2){
+
+   alert("دو نقطه متفاوت انتخاب کنید.");
+
+   return;
+ }
+
+ const d=distance2D(p1,p2);
+
+ let dh=null;
+
+ if(p1.alt!==null && p2.alt!==null){
+
+   dh=Math.abs(p1.alt-p2.alt);
+
+ }
+
+ const d3=dh===null
+   ?null
+   :Math.sqrt(d*d+dh*dh);
+
+ $("distanceResult").style.display="block";
+
+ $("distanceResult").innerHTML=
+
+ "فاصله افقی: "+d.toFixed(3)+" متر<br>"+
+ "اختلاف ارتفاع: "+(dh===null?"ناموجود":dh.toFixed(2)+" متر")+"<br>"+
+ "فاصله مستقیم: "+(d3===null?"ناموجود":d3.toFixed(3)+" متر");
+
+ if(distanceLine){
+
+   map.removeLayer(distanceLine);
+
+ }
+
+ distanceLine=L.polyline(
+
+   [[p1.lat,p1.lon],[p2.lat,p2.lon]],
+
+   {color:"#aa332a",weight:4}
+
+ ).addTo(map);
+
+ map.fitBounds(distanceLine.getBounds());
+
 }
 
-const p1Name = pt1.name || "نقطه " + pt1.id;
-const p2Name = pt2.name || "نقطه " + pt2.id;
+/* ===============================
+   مساحت
+================================ */
 
-const resultObj = {
-p1Id: pt1.id, p1Name: p1Name,
-p2Id: pt2.id, p2Name: p2Name,
-dist2D: dist2D, diffAlt: diffAlt, dist3D: dist3D
-};
+function updateCornerList(){
 
-calculatedDistances.unshift(resultObj);
-saveStorage();
-renderDistTable();
+ if(points.length<3){
 
-const resDiv = $("distResult"); resDiv.style.display = "block"; resDiv.innerHTML =<strong>نتیجه محاسبه فاصله:</strong><br>
-فاصله بین <b>{esc(p2Name)}</b>:<br>
-• <b>فاصله افقی (2D):</b> {(dist2D/1000).toFixed(3)} کیلومتر)<br>
-latex
-{diffAlt !== null ? `• &lt;b&gt;اختلاف ارتفاع:&lt;/b&gt; 
+   $("cornerList").innerHTML=
+     "حداقل سه نقطه ثبت کنید.";
 
-{diffAlt.toFixed(2)} متر<br>: ''} ${dist3D !== null ? • &lt;b&gt;فاصله مستقیم (3D):&lt;/b&gt;${dist3D.toFixed(2)} متر<br>: ''};
+   return;
 
-if(map){
-if(polyline) map.removeLayer(polyline);
-polyline = L.polyline([[pt1.lat, pt1.lon], [pt2.lat, pt2.lon]], {color: '#aa332a', weight: 4, opacity: 0.8}).addTo(map);
-map.fitBounds(polyline.getBounds(), {padding: [30, 30]});
-}
+ }
+
+ $("cornerList").innerHTML=points.map(p=>
+
+ `<label style="display:flex;gap:8px;align-items:center">
+ <input type="checkbox" class="corner" value="${p.id}" style="width:auto">
+ ${p.id} - ${escapeHTML(p.name||"نقطه")}
+ </label>`
+
+ ).join("");
+
 }
 
 function calculateArea(){
-const chks = document.querySelectorAll(".corner-chk:checked");
-const selectedIds = Array.from(chks).map(c => Number(c.value));
 
-if(selectedIds.length < 3){
-alert("برای محاسبه مساحت باید حداقل ۳ کنج انتخاب شود.");
-return;
+ const ids=Array.from(
+   document.querySelectorAll(".corner:checked")
+ ).map(x=>Number(x.value));
+
+ if(ids.length<3){
+
+   alert("حداقل سه نقطه انتخاب کنید.");
+
+   return;
+
+ }
+
+ const selected=ids.map(id=>
+   points.find(p=>p.id===id)
+ ).filter(Boolean);
+
+ const coords=selected.map(p=>
+   latLonToUTM(p.lat,p.lon)
+ );
+
+ let sum=0;
+ let perimeter=0;
+
+ for(let i=0;i<coords.length;i++){
+
+   const j=(i+1)%coords.length;
+
+   sum+=coords[i].easting*coords[j].northing;
+
+   sum-=coords[j].easting*coords[i].northing;
+
+   const dx=coords[j].easting-coords[i].easting;
+
+   const dy=coords[j].northing-coords[i].northing;
+
+   perimeter+=Math.sqrt(dx*dx+dy*dy);
+
+ }
+
+ const area=Math.abs(sum)/2;
+
+ $("areaResult").style.display="block";
+
+ $("areaResult").innerHTML=
+
+ "مساحت: "+area.toFixed(2)+" متر مربع<br>"+
+ "هکتار: "+(area/10000).toFixed(4)+"<br>"+
+ "محیط: "+perimeter.toFixed(2)+" متر";
+
+ if(areaPolygon){
+
+   map.removeLayer(areaPolygon);
+
+ }
+
+ areaPolygon=L.polygon(
+
+   selected.map(p=>[p.lat,p.lon]),
+
+   {color:"#087e75",fillOpacity:.3}
+
+ ).addTo(map);
+
+ map.fitBounds(areaPolygon.getBounds());
+
 }
 
-const selectedPoints = selectedIds.map(id => points.find(p => Number(p.id) === id)).filter(Boolean);
-const result = calculatePolygonAreaUTM(selectedPoints);
+/* ===============================
+   ذخیره فایل
+================================ */
 
-const pointNames = selectedPoints.map(p => نقطه ${p.id}+ (p.name? (${p.name}):''));
-const areaObj = {
-pointIds: selectedIds,
-pointNames: pointNames,
-area: result.area,
-perimeter: result.perimeter,
-time: new Date().toLocaleString("fa-IR")
-};
+function downloadFile(name,content,type){
 
-calculatedAreas.unshift(areaObj);
-saveStorage();
-renderAreaTable();
+ const blob=new Blob(
+   [content],
+   {type:type}
+ );
 
-const resDiv = {selectedPoints.length} نقطه</b><br>
-• <b>مساحت محشور زمین:</b> <span style="color:#087e75;font-weight:bold;font-size:14px;">{(result.area/10000).toFixed(4)} هکتار)<br>
-• <b>محیط زمین:</b> {esc(pointNames.join(" ➔ "))}`;
+ const url=URL.createObjectURL(blob);
 
-if(map){
-if(polygonOverlay) map.removeLayer(polygonOverlay);
-const latLngs = selectedPoints.map(p => [p.lat, p.lon]);
-polygonOverlay = L.polygon(latLngs, {color: '#087e75', fillColor: '#087e75', fillOpacity: 0.35, weight: 3}).addTo(map);
-map.fitBounds(polygonOverlay.getBounds(), {padding: [30, 30]});
+ const a=document.createElement("a");
+
+ a.href=url;
+
+ a.download=name;
+
+ document.body.appendChild(a);
+
+ a.click();
+
+ a.remove();
+
+ setTimeout(()=>URL.revokeObjectURL(url),2000);
+
 }
+
+/* ===============================
+   JSON
+================================ */
+
+function exportJSON(){
+
+ const projectName=$("fileName").value.trim();
+
+ if(!projectName){
+
+   alert("نام فایل را وارد کنید.");
+
+   return;
+
+ }
+
+ if(!confirm(
+   "فایل "+projectName+".json دانلود شود؟\n"+
+   "محل ذخیره به مرورگر بستگی دارد."
+ ))return;
+
+ const data={
+
+   project:"Sahroud GPS",
+
+   author:"مهندس احمد نوری",
+
+   created:new Date().toISOString(),
+
+   points:points
+
+ };
+
+ downloadFile(
+
+   projectName.replace(/[\\/:*?"<>|]/g,"_")+".json",
+
+   JSON.stringify(data,null,2),
+
+   "application/json;charset=utf-8"
+
+ );
+
 }
 
-window.deleteDist = idx => {
-calculatedDistances.splice(idx, 1);
-saveStorage();
-renderDistTable();
-};
-
-window.deleteArea = idx => {
-calculatedAreas.splice(idx, 1);
-saveStorage();
-renderAreaTable();
-};
-
-window.showPoint=id=>{
-const i=points.findIndex(p=>Number(p.id)===Number(id));
-if(i<0||!map)return;
-map.setView([points[i].lat,points[i].lon],19);
-markers[i]?.openPopup();
-};
-
-window.deletePoint=id=>{
-if(!confirm("این نقطه حذف شود؟"))return;
-points=points.filter(p=>Number(p.id)!==Number(id));
-saveStorage();renderTable();drawMarkers();
-};
-
-// دانلود فایل با دایرکتوری ترجیحی sahroud_app
-function downloadFile(defaultName, content, type){
-const fileName = "sahroud_app_" + defaultName; // ایجاد ساختار فایل سفارشی
-const blob = new Blob([content], {type});
-const url = URL.createObjectURL(blob);
-const a = document.createElement("a");
-a.href = url;
-a.download = fileName;
-document.body.appendChild(a);
-a.click();
-a.remove();
-setTimeout(()=>URL.revokeObjectURL(url), 2000);
-}
+/* ===============================
+   CSV
+================================ */
 
 function exportCSV(){
-const rows=[["id","name","utm_zone","utm_easting","utm_northing","latitude","longitude","altitude_m","gps_accuracy_m","time","note","author"],
-...points.map(p=>{
-const utm = p.utm || LatLonToUTM(p.lat, p.lon);
-return [p.id,p.name,utm.zone,utm.easting.toFixed(2),utm.northing.toFixed(2),p.lat,p.lon,p.alt??"",p.accuracy??"",p.time,p.note,"مهندس احمد نوری"];
-})];
-downloadFile("SurveyRTK.csv","\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n"),"text/csv;charset=utf-8");
+
+ const rows=[
+
+ ["id","name","zone","easting","northing","latitude","longitude","altitude","accuracy","time","note"],
+
+ ...points.map(p=>{
+
+   const u=p.utm;
+
+   return [
+
+     p.id,
+
+     p.name,
+
+     u.zone,
+
+     u.easting.toFixed(2),
+
+     u.northing.toFixed(2),
+
+     p.lat,
+
+     p.lon,
+
+     p.alt??"",
+
+     p.accuracy,
+
+     p.time,
+
+     p.note
+
+   ];
+
+ })
+
+ ];
+
+ const csv="\uFEFF"+rows.map(r=>
+
+ r.map(v=>
+
+ '"'+String(v??"").replace(/"/g,'""')+'"'
+
+ ).join(",")
+
+ ).join("\r\n");
+
+ downloadFile(
+
+ ($("fileName").value||"Sahroud_Survey")+".csv",
+
+ csv,
+
+ "text/csv;charset=utf-8"
+
+ );
+
 }
 
-function exportGeoJSON(){
-const data={
-type:"FeatureCollection",
-properties:{ author: "مهندس احمد نوری", project: "Sahroud RTK Survey" },
-features:points.map(p=>{
-const utm = p.utm || LatLonToUTM(p.lat, p.lon);
-return {
-type:"Feature",
-properties:{
-id:p.id,name:p.name,note:p.note,
-utm_easting:utm.easting, utm_northing:utm.northing, utm_zone:utm.zone,
-altitude_m:p.alt,gps_accuracy_m:p.accuracy,time:p.time,author:"مهندس احمد نوری"
-},
-geometry:{type:"Point",coordinates:[p.lon,p.lat,...(p.alt==null?[]:[p.alt])]}
+/* ===============================
+   بازیابی
+================================ */
+
+$("restore").addEventListener("change",function(e){
+
+ const file=e.target.files[0];
+
+ if(!file)return;
+
+ const reader=new FileReader();
+
+ reader.onload=function(){
+
+   try{
+
+     const data=JSON.parse(reader.result);
+
+     const list=Array.isArray(data)
+       ?data
+       :data.points;
+
+     if(!Array.isArray(list)){
+
+       throw new Error();
+
+     }
+
+     if(!confirm("اطلاعات پروژه بازیابی شود؟"))return;
+
+     points=list.map(p=>({
+
+       ...p,
+
+       id:Number(p.id),
+
+       lat:Number(p.lat),
+
+       lon:Number(p.lon),
+
+       utm:latLonToUTM(
+         Number(p.lat),
+         Number(p.lon)
+       )
+
+     }));
+
+     saveStorage();
+
+     renderPoints();
+
+     alert("بازیابی انجام شد.");
+
+   }catch(error){
+
+     alert("فایل پشتیبان معتبر نیست.");
+
+   }
+
+ };
+
+ reader.readAsText(file);
+
+ e.target.value="";
+
+});
+
+/* ===============================
+   رویدادها
+================================ */
+
+$("startGPS").onclick=startGPS;
+
+$("stopGPS").onclick=stopGPS;
+
+$("savePoint").onclick=registerPoint;
+
+$("clearForm").onclick=function(){
+
+ $("pointName").value="";
+
+ $("pointNote").value="";
+
 };
-})
+
+$("calcDistance").onclick=calculateDistance;
+
+$("calcArea").onclick=calculateArea;
+
+$("saveJSON").onclick=exportJSON;
+
+$("saveCSV").onclick=exportCSV;
+
+$("clearDistance").onclick=function(){
+
+ if(distanceLine){
+
+   map.removeLayer(distanceLine);
+
+   distanceLine=null;
+
+ }
+
+ $("distanceResult").style.display="none";
+
 };
-downloadFile("SurveyRTK.geojson",JSON.stringify(data,null,2),"application/geo+json");
+
+$("clearArea").onclick=function(){
+
+ if(areaPolygon){
+
+   map.removeLayer(areaPolygon);
+
+   areaPolygon=null;
+
+ }
+
+ $("areaResult").style.display="none";
+
+};
+
+$("deleteAll").onclick=function(){
+
+ if(!confirm("تمام نقاط حذف شوند؟"))return;
+
+ points=[];
+
+ saveStorage();
+
+ renderPoints();
+
+};
+
+/* ===============================
+   نقشه
+================================ */
+
+function initMap(){
+
+ if(!window.L){
+
+   $("map").innerHTML=
+     "نقشه بارگذاری نشد. اینترنت را بررسی کنید.";
+
+   return;
+
+ }
+
+ map=L.map("map").setView(
+   [35.463,54.976],
+   12
+ );
+
+ L.tileLayer(
+
+   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+   {
+
+     maxZoom:19,
+
+     attribution:"© OpenStreetMap"
+
+   }
+
+ ).addTo(map);
+
 }
 
-function exportKML(){
-const escXml=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">",'"':""","'":"'"}[c]));
-const marks=points.map(p=>{
-const utm = p.utm || LatLonToUTM(p.lat, p.lon);
-return <Placemark&gt;&lt;name&gt;${escXml(p.name||("Point "+p.id))}</name><description>UTM: ${utm.formatted} | Accuracy: ${escXml(p.accuracy)} m | Author: مهندس احمد نوری</description><Point><coordinates>${p.lon},${p.lat},${p.alt??0}&lt;/coordinates&gt;&lt;/Point&gt;&lt;/Placemark>;
-}).join("");
-downloadFile("SurveyRTK.kml",'<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Sahroud RTK Points</name>'+marks+'</Document></kml>','application/vnd.google-earth.kml+xml');
+/* ===============================
+   بارگذاری اولیه
+================================ */
+
+try{
+
+ points=JSON.parse(
+   localStorage.getItem(STORAGE_KEY)||"[]"
+ );
+
+ points=points.map(p=>({
+
+   ...p,
+
+   utm:latLonToUTM(
+     Number(p.lat),
+     Number(p.lon)
+   )
+
+ }));
+
+}catch(error){
+
+ points=[];
+
 }
 
-function exportTXT(){
-let s = "=========================================
-";
-s += " گزارش نقشه‌برداری Sahroud RTK
-";
-s += " تهیه کننده: مهندس احمد نوری
-";
-s += " تاریخ گزارش: " + new Date().toLocaleString("fa-IR") + "
-";
-s += "=========================================
+initMap();
 
-";
+renderPoints();
 
-s += "=== لیست نقاط ثبت شده ===
+window.addEventListener("pagehide",function(){
 
-";
-s += points.map(p=>{
-const utm = p.utm || LatLonToUTM(p.lat, p.lon);
-return شماره نقطه: ${p.id}
-نام/کد: ${p.name||"—"} UTM: ${utm.formatted}
-عرض جغرافیایی: ${p.lat} طول جغرافیایی: ${p.lon}
-ارتفاع GPS: ${p.alt??"ناموجود"} دقت گزارش شده: ${p.accuracy??"ناموجود"} متر
-زمان: ${p.time} توضیحات: ${p.note||"—"}
--------------------------`;
-}).join("
-");
+ if(watchID!==null){
 
-if(calculatedDistances.length){
-s += "
+   navigator.geolocation.clearWatch(watchID);
 
-=== محاسبات فواصل ===
+ }
 
-";
-s += calculatedDistances.map(d=>از: نقطه${d.p1Id} ({d.p2Id} ({d.dist2D.toFixed(2)} متر
-اختلاف ارتفاع: {d.dist3D!==null?d.dist3D.toFixed(2)+" متر":"ناموجود"}
--------------------------`).join("
-");
-}
-
-if(calculatedAreas.length){
-s += "
-
-=== محاسبات مساحت ===
-
-";
-s += calculatedAreas.map((a,i)=>محاسبه شماره ${i+1}:
-کنج‌ها: ${a.pointNames.join(" -&gt; ")} مساحت محصور: ${a.area.toFixed(2)} متر مربع (${(a.area/10000).toFixed(4)} هکتار) محیط: ${a.perimeter.toFixed(2)} متر
--------------------------`).join("
-");
-}
-
-downloadFile("SurveyRTK_Report.txt",s,"text/plain;charset=utf-8");
-}
-
-// رویدادها
-$("startGPS").addEventListener("click",startGPS); $("stopGPS").addEventListener("click",stopGPS);
-$("savePoint").addEventListener("click",registerPoint); $("clearForm").addEventListener("click",()=>{$("pointName").value="";$("pointNote").value="";});
-$("calcDistBtn").addEventListener("click", calculateDistance); $("clearDistBtn").addEventListener("click", ()=>{
-if(polyline && map){ map.removeLayer(polyline); polyline = null; }
-`$("distResult").style.display = "none";
 });
 
-("clearAreaBtn").addEventListener("click", ()=>{
-if(polygonOverlay && map){ map.removeLayer(polygonOverlay); polygonOverlay = null; }
-$`("areaResult").style.display = "none";
-});
-
-$("csv").addEventListener("click",exportCSV); $("geojson").addEventListener("click",exportGeoJSON);
-$("kml").addEventListener("click",exportKML); $("txt").addEventListener("click",exportTXT);
-
-`$("backup").addEventListener("click",()=>downloadFile("Backup.json",JSON.stringify({
-author: "مهندس احمد نوری",
-points, calculatedDistances, calculatedAreas
-},null,2),"application/json"));
-
-$`("restore").addEventListener("change",e=>{
-const f=e.target.files[0];if(!f)return;const r=new FileReader();
-r.onload=()=>{try{
-const data=JSON.parse(r.result);
-let pList = Array.isArray(data) ? data : data.points;
-let dList = data.calculatedDistances || [];
-let aList = data.calculatedAreas || [];
-if(!Array.isArray(pList)||pList.some(p=>!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lon))))throw Error();
-if(confirm("اطلاعات پروژه بازیابی شود؟")){
-points=pList; calculatedDistances=dList; calculatedAreas=aList;
-saveStorage();renderTable();renderDistTable();renderAreaTable();drawMarkers();alert("بازیابی موفقیت‌آمیز بود.");
-}
-}catch(err){alert("فایل پشتیبان معتبر نیست.");}e.target.value="";};r.readAsText(f);
-});
-
-`$("deleteAll").addEventListener("click",()=>{
-if(!confirm("تمام نقاط و محاسبات حذف شوند؟"))return;
-points=[]; calculatedDistances=[]; calculatedAreas=[];
-saveStorage();renderTable();renderDistTable();renderAreaTable();drawMarkers();
-if(polyline && map){ map.removeLayer(polyline); polyline = null; }
-if(polygonOverlay && map){ map.removeLayer(polygonOverlay); polygonOverlay = null; }
-});
-
-// بارگذاری اولیه
-loadPoints();initMap();renderTable();renderDistTable();renderAreaTable();
-window.addEventListener("pagehide",()=>{if(watchID!==null)navigator.geolocation.clearWatch(watchID);});
 </script>
+
 </body>
 </html>
