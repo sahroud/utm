@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LandXML xmlns="http://www.landxml.org/schema/LandXML-1.2" date="2026-11-14" time="10:00:00" version="1.2">
+<Units><Metric><LinearUnit meter="1"/></Metric></Units>
+<CoordinateSystem name="WGS84 UTM Zone 40N - sample only"/>
+<CgPoints>
+<CgPoint name="P001">3925000.500 497850.250 1250.300</CgPoint>
+<CgPoint name="P002">3925000.500 497900.250 1250.100</CgPoint>
+<CgPoint name="P003">3925050.500 497900.250 1250.450</CgPoint>
+</CgPoints></LandXML>
