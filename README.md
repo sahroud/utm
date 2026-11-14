@@ -4,7 +4,8 @@
 تهیه و توسعه: مهندس احمد نوری
 
 ## اجرای برنامه
-- [اجرای صفحه اصلی (در صورت فعال بودن GitHub Pages برای مخزن)](https://sahroud.github.io/utm/)
+- [اجرای آنلاین آزمایشی در مرورگر](https://htmlpreview.github.io/?https://github.com/sahroud/utm/blob/feature/utm-pro-v1/index.html)
+- [اجرای صفحه اصلی GitHub Pages (پس از تنظیم انتشار مخزن)](https://sahroud.github.io/utm/)
 - [اجرای مستقیم فایل HTML از مخزن](./Sahroud-UTM-Pro-v1.3.html)
 - [دانلود فایل مستقل HTML](https://raw.githubusercontent.com/sahroud/utm/feature/utm-pro-v1/Sahroud-UTM-Pro-v1.3.html)
 
