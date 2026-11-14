@@ -1,11 +1,11 @@
-# Sahroud UTM Pro — نسخه آزمایشی 1.3
+# Sahroud UTM Pro — نسخه 1.3
 
 **نسخه رابط کاربری بازطراحی‌شده برای موبایل و لپ‌تاپ**  
 تهیه و توسعه: مهندس احمد نوری
 
 ## اجرای برنامه
 - [اجرای آنلاین آزمایشی در مرورگر](https://htmlpreview.github.io/?https://github.com/sahroud/utm/blob/feature/utm-pro-v1/index.html)
-- [اجرای صفحه اصلی GitHub Pages (پس از تنظیم انتشار مخزن)](https://sahroud.github.io/utm/)
+- [نسخه رسمی وب و PWA در GitHub Pages](https://sahroud.github.io/utm/) (پس از فعال‌سازی Pages در تنظیمات مخزن)
 - [اجرای مستقیم فایل HTML از مخزن](./Sahroud-UTM-Pro-v1.3.html)
 - [دانلود فایل مستقل HTML](https://raw.githubusercontent.com/sahroud/utm/feature/utm-pro-v1/Sahroud-UTM-Pro-v1.3.html)
 
@@ -18,6 +18,19 @@
 - manifest و service worker برای نصب‌پذیری و cache آفلاین پس از استقرار روی HTTPS.
 - کنترل‌های لمسی بزرگ‌تر، جدول پیمایش‌پذیر و چیدمان تک‌ستونه در نمایشگر کوچک.
 - حفظ موتور تبدیل و قابلیت‌های نسخه 1.2 شامل UTM رفت‌وبرگشت، CSV/TXT/TSV، DXF پایه، LandXML نقاط، QA، Helmert و NMEA GGA.
+
+
+## انتشار رسمی و فعال‌سازی PWA
+برای انتشار، فایل گردش‌کار `.github/workflows/deploy-pages.yml` در شاخه `feature/utm-pro-v1` قرار دارد و با هر push به همین شاخه، پس از فعال بودن GitHub Pages با منبع GitHub Actions، سایت را منتشر می‌کند.
+
+**یک‌بار تنظیم دستی لازم است:** در مخزن GitHub وارد مسیر **Settings → Pages** شوید و در بخش **Build and deployment**، گزینه **Source** را روی **GitHub Actions** قرار دهید. سپس به تب **Actions** بروید و گردش‌کار **Deploy Sahroud UTM Pro to GitHub Pages** را اجرا/بررسی کنید. پس از موفقیت اجرای Deploy، آدرس رسمی پروژه:
+`https://sahroud.github.io/utm/`
+
+**نصب روی موبایل و دسکتاپ:**
+1. سایت رسمی را با HTTPS باز کنید.
+2. در Chrome/Edge از دکمه «نصب برنامه» داخل صفحه یا منوی مرورگر گزینه **Install app** را انتخاب کنید.
+3. در iPhone/iPad از منوی Share گزینه **Add to Home Screen** را انتخاب کنید؛ رفتار نصب و پشتیبانی مرورگرها متفاوت است.
+4. پس از بارگذاری اولیه، فایل‌های اصلی در Service Worker cache می‌شوند و در بازدیدهای بعدی می‌توانند آفلاین باز شوند. قابلیت‌های نیازمند اینترنت یا فایل‌هایی که هنوز cache نشده‌اند ممکن است آفلاین در دسترس نباشند.
 
 ## امکانات محاسباتی و تبادل داده
 - تبدیل WGS84 Latitude/Longitude ↔ UTM و تشخیص/انتخاب Zone و Hemisphere.
