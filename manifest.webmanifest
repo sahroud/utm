@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "Sahroud UTM Pro",
+  "short_name": "UTM Pro",
+  "description": "سامانه فارسی تبدیل مختصات، GNSS و تبادل فایل‌های نقشه‌برداری",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f6fa",
+  "theme_color": "#102b46",
+  "icons": [
+    { "src": "./sahroud-utm-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
