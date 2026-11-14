@@ -1,0 +1,53 @@
+name: Deploy Sahroud UTM Pro to GitHub Pages
+
+on:
+  push:
+    branches:
+      - feature/utm-pro-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Validate PWA manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m = json.loads(Path("manifest.webmanifest").read_text(encoding="utf-8"))
+          required = ["name", "short_name", "start_url", "scope", "display", "icons"]
+          missing = [k for k in required if not m.get(k)]
+          if missing:
+              raise SystemExit("Missing manifest fields: " + ", ".join(missing))
+          if not Path("index.html").is_file() or not Path("sw.js").is_file():
+              raise SystemExit("Missing index.html or sw.js")
+          print("PWA manifest and entry files: OK")
+          PY
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
