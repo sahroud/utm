@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b52"><title>SAHROUD Survey | مجموعه نقشه‌برداری</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef3f6;color:#183342;font-family:Tahoma,Arial,sans-serif}
+header{background:#123b52;color:#fff;padding:25px 18px;text-align:center}header h1{margin:0 0 8px;font-size:25px}header p{margin:0;color:#d8e8ef}
+main{max-width:850px;margin:22px auto;padding:0 14px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px}
+.card{background:#fff;border:1px solid #d6e0e6;border-radius:16px;padding:17px;box-shadow:0 3px 12px #123b520d}
+.top{display:flex;align-items:center;gap:12px}.ico{width:48px;height:48px;border-radius:13px;background:#e5f1f6;display:grid;place-items:center;font-size:26px}
+h2{font-size:17px;margin:0 0 5px}.desc{font-size:13px;color:#607582;line-height:1.8;min-height:48px}
+.actions{display:flex;gap:8px;margin-top:13px}.btn{border:0;border-radius:9px;padding:10px 12px;font:inherit;font-size:13px;text-decoration:none;cursor:pointer;text-align:center}
+.open{background:#1676a8;color:white;flex:1}.copy{background:#e9eff2;color:#183342}
+small{display:block;color:#6c7f89;margin-top:18px;line-height:1.8}
+</style></head><body>
+<header><h1>🧭 SAHROUD SURVEY</h1><p>مرکز دسترسی مستقل نرم‌افزارهای نقشه‌برداری</p></header>
+<main><div class="grid">
+<section class="card"><div class="top"><div class="ico">📍</div><div><h2>SAHROUD UTM</h2><div>تبدیل مختصات، نقاط و مساحت</div></div></div><p class="desc">نسخه فعلی نرم‌افزار UTM؛ فایل اصلی بدون تغییر نگهداری شده است.</p><div class="actions"><a class="btn open" href="../Index.html">اجرای نرم‌افزار</a><button class="btn copy" data-url="https://sahroud.github.io/utm/Index.html">کپی لینک</button></div></section>
+<section class="card"><div class="top"><div class="ico">🛰️</div><div><h2>SAHROUD RTK</h2><div>ابزار GNSS و برداشت میدانی</div></div></div><p class="desc">نسخه مستقل منتقل‌شده از مخزن 110؛ لینک قدیمی آن نیز حفظ شده است.</p><div class="actions"><a class="btn open" href="../gps-rtk/">اجرای نرم‌افزار</a><button class="btn copy" data-url="https://sahroud.github.io/utm/gps-rtk/">کپی لینک</button></div></section>
+<section class="card"><div class="top"><div class="ico">🌍</div><div><h2>SAHROUD EARTH</h2><div>توپوگرافی و عملیات خاکی</div></div></div><p class="desc">نسخه مستقل منتقل‌شده از مخزن A؛ فایل منبع قدیمی حذف نشده است.</p><div class="actions"><a class="btn open" href="../earth/">اجرای نرم‌افزار</a><button class="btn copy" data-url="https://sahroud.github.io/utm/earth/">کپی لینک</button></div></section>
+<section class="card"><div class="top"><div class="ico">⛰️</div><div><h2>SAHROUD TOPOGRAPHY</h2><div>نرم‌افزار جامع توپوگرافی جدید</div></div></div><p class="desc">شاخه مستقل اولیه ایجاد شده؛ مشخصات و دامنه امکانات را در مرحله بعد با شما نهایی می‌کنیم.</p><div class="actions"><a class="btn open" href="../topography/">ورود به شاخه جدید</a><button class="btn copy" data-url="https://sahroud.github.io/utm/topography/">کپی لینک</button></div></section>
+</div><small>نشانی‌های قدیمی حفظ شده‌اند: <a href="https://sahroud.github.io/110/">SAHROUD 110</a> و <a href="https://sahroud.github.io/utm/Index.html">SAHROUD UTM</a>. هر نرم‌افزار مستقل اجرا می‌شود.</small></main>
+<script>document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.url);b.textContent='کپی شد ✓';setTimeout(()=>b.textContent='کپی لینک',1600)}catch(e){prompt('لینک را کپی کنید:',b.dataset.url)}}));</script>
+</body></html>
