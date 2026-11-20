@@ -22,4 +22,9 @@ small{display:block;color:#6c7f89;margin-top:18px;line-height:1.8}
 <section class="card"><div class="top"><div class="ico">⛰️</div><div><h2>SAHROUD TOPOGRAPHY</h2><div>نرم‌افزار جامع توپوگرافی جدید</div></div></div><p class="desc">شاخه مستقل اولیه ایجاد شده؛ مشخصات و دامنه امکانات را در مرحله بعد با شما نهایی می‌کنیم.</p><div class="actions"><a class="btn open" href="../topography/">ورود به شاخه جدید</a><button class="btn copy" data-url="https://sahroud.github.io/utm/topography/">کپی لینک</button></div></section>
 </div><small>نشانی‌های قدیمی حفظ شده‌اند: <a href="https://sahroud.github.io/110/">SAHROUD 110</a> و <a href="https://sahroud.github.io/utm/Index.html">SAHROUD UTM</a>. هر نرم‌افزار مستقل اجرا می‌شود.</small></main>
 <script>document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.url);b.textContent='کپی شد ✓';setTimeout(()=>b.textContent='کپی لینک',1600)}catch(e){prompt('لینک را کپی کنید:',b.dataset.url)}}));</script>
+
+<!-- SAHROUD COUNTER shared analytics; activates after central API configuration and user consent -->
+<script>window.SAHROUD_COUNTER_CONFIG={appId:"survey-apps",appName:"SAHROUD Survey Apps",version:"1.0"};</script>
+<script src="https://sahroud.github.io/A/counter/config.js"></script>
+<script src="https://sahroud.github.io/A/counter/client.js" defer></script>
 </body></html>
