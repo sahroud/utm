@@ -330,7 +330,9 @@ Location گوشی را روشن کنید و مجوز موقعیت مرورگر �
 
 <section class="card wide">
 <h2>🗺️ نقشه نقاط</h2>
-
+<div class="actions" style="margin:0 0 10px">
+<button id="myLocation" class="green" type="button">📍 موقعیت من</button>
+</div>
 <div id="map"></div>
 
 <p class="note">
@@ -791,6 +793,52 @@ function startGPS(){
 
  );
 
+}
+
+/* ===============================
+   موقعیت من (دریافت یک‌باره)
+================================ */
+let myLocationMarker=null;
+
+function showMyLocation(){
+ if(!window.isSecureContext){
+   setStatus("برای دریافت موقعیت، صفحه باید با HTTPS باز شود.","bad");
+   return;
+ }
+ if(!navigator.geolocation){
+   setStatus("مرورگر از موقعیت‌یابی پشتیبانی نمی‌کند.","bad");
+   return;
+ }
+ const button=$("myLocation");
+ button.disabled=true;
+ button.textContent="در حال دریافت موقعیت...";
+ setStatus("در حال دریافت موقعیت فعلی گوشی...");
+ navigator.geolocation.getCurrentPosition(position=>{
+   const c=position.coords;
+   currentPosition={lat:c.latitude,lon:c.longitude,alt:c.altitude,accuracy:c.accuracy,timestamp:position.timestamp};
+   const utm=latLonToUTM(c.latitude,c.longitude);
+   $("lat").textContent=c.latitude.toFixed(7);
+   $("lon").textContent=c.longitude.toFixed(7);
+   $("utm").textContent=utm.formatted;
+   $("alt").textContent=c.altitude==null?"ناموجود":c.altitude.toFixed(2)+" متر";
+   $("accuracy").textContent=c.accuracy==null?"ناموجود":c.accuracy.toFixed(2)+" متر";
+   $("qualityInfo").textContent="دقت گزارش‌شده گوشی: "+(c.accuracy==null?"ناموجود":c.accuracy.toFixed(2)+" متر")+"؛ این مقدار تضمین دقت نقشه‌برداری نیست.";
+   $("savePoint").disabled=false;
+   setStatus("موقعیت فعلی دریافت شد؛ برای ثبت آن، دکمه «ثبت نقطه» را بزنید. دقت گزارش‌شده: "+(c.accuracy==null?"ناموجود":c.accuracy.toFixed(2)+" متر"),"good");
+   if(map){
+     map.setView([c.latitude,c.longitude],18);
+     if(myLocationMarker) map.removeLayer(myLocationMarker);
+     myLocationMarker=L.circleMarker([c.latitude,c.longitude],{radius:9,color:"#075985",weight:3,fillColor:"#38bdf8",fillOpacity:.9}).addTo(map);
+     myLocationMarker.bindPopup("موقعیت فعلی من<br>دقت گزارش‌شده: "+(c.accuracy==null?"ناموجود":c.accuracy.toFixed(2)+" متر")).openPopup();
+   }
+   button.disabled=false;
+   button.textContent="📍 موقعیت من";
+ },error=>{
+   const messages={1:"مجوز موقعیت‌یابی رد شده است؛ مجوز Location مرورگر را فعال کنید.",2:"موقعیت فعلی در دسترس نیست؛ GPS گوشی را بررسی کنید.",3:"زمان دریافت موقعیت تمام شد؛ دوباره تلاش کنید."};
+   setStatus(messages[error.code]||"خطا در دریافت موقعیت: "+error.message,"bad");
+   button.disabled=false;
+   button.textContent="📍 موقعیت من";
+ },{enableHighAccuracy:true,maximumAge:0,timeout:30000});
 }
 
 /* ===============================
@@ -1431,6 +1479,8 @@ $("restore").addEventListener("change",function(e){
 /* ===============================
    رویدادها
 ================================ */
+
+$("myLocation").onclick=showMyLocation;
 
 $("startGPS").onclick=startGPS;
 
