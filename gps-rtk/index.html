@@ -89,7 +89,7 @@ footer{text-align:center;color:#71848c;font-size:11px;padding:15px 0 25px}
 </div>
 </section>
 
-<section class="card wide"><h2>نقشه نقاط ثبت‌شده</h2><div id="map"></div><p class="note">برای نمایش نقشه اینترنت لازم است؛ ثبت مختصات به بارگذاری نقشه وابسته نیست.</p></section>
+<section class="card wide"><h2>نقشه نقاط ثبت‌شده</h2><div class="actions" style="margin:0 0 10px"><button class="green" id="myLocation" type="button">📍 موقعیت من</button></div><div id="map"></div><p class="note">برای نمایش نقشه اینترنت لازم است؛ ثبت مختصات به بارگذاری نقشه وابسته نیست.</p></section>
 
 <section class="card wide">
 <h2>مدیریت پروژه و خروجی</h2>
@@ -115,7 +115,7 @@ footer{text-align:center;color:#71848c;font-size:11px;padding:15px 0 25px}
 const $ = id => document.getElementById(id);
 const STORAGE_KEY = "sahroud_rtk_points_v3";
 const DIST_STORAGE_KEY = "sahroud_rtk_distances_v1";
-let currentPosition = null, watchID = null, points = [], calculatedDistances = [], map = null, markers = [], polyline = null;
+let currentPosition = null, watchID = null, points = [], calculatedDistances = [], map = null, markers = [], polyline = null, myLocationMarker = null;
 
 function setStatus(message,type=""){ $("gpsStatus").className="status "+type; $("gpsStatus").textContent=message; }
 
@@ -163,6 +163,37 @@ function startGPS(){
     watchID=null; $("startGPS").disabled=false; $("stopGPS").disabled=true;
   },{enableHighAccuracy:true,maximumAge:0,timeout:30000});
   $("stopGPS").disabled=false;
+}
+
+function showMyLocation(){
+  if(!window.isSecureContext){setStatus("برای دریافت موقعیت، صفحه باید با HTTPS باز شود.","bad");return;}
+  if(!navigator.geolocation){setStatus("مرورگر از موقعیت‌یابی پشتیبانی نمی‌کند.","bad");return;}
+  const button=$("myLocation");
+  button.disabled=true;button.textContent="در حال دریافت موقعیت...";
+  setStatus("در حال دریافت موقعیت فعلی گوشی...");
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const c=pos.coords;
+    currentPosition={lat:c.latitude,lon:c.longitude,alt:c.altitude,accuracy:c.accuracy,speed:c.speed,timestamp:pos.timestamp};
+    $("lat").textContent=fmt(c.latitude);
+    $("lon").textContent=fmt(c.longitude);
+    $("alt").textContent=c.altitude==null?"ناموجود":fmt(c.altitude,2);
+    $("accuracy").textContent=c.accuracy==null?"ناموجود":c.accuracy.toFixed(2)+" متر";
+    $("speed").textContent=c.speed==null?"ناموجود":c.speed.toFixed(2);
+    $("qualityInfo").textContent=accuracyDescription(currentPosition);
+    $("savePoint").disabled=false;
+    setStatus("موقعیت فعلی دریافت شد؛ برای ذخیره آن «ثبت مختصات» را بزنید. "+accuracyDescription(currentPosition),"good");
+    if(map){
+      map.setView([c.latitude,c.longitude],18);
+      if(myLocationMarker)map.removeLayer(myLocationMarker);
+      myLocationMarker=L.circleMarker([c.latitude,c.longitude],{radius:9,color:"#075985",weight:3,fillColor:"#38bdf8",fillOpacity:.9}).addTo(map);
+      myLocationMarker.bindPopup("موقعیت فعلی من<br>"+accuracyDescription(currentPosition)).openPopup();
+    }
+    button.disabled=false;button.textContent="📍 موقعیت من";
+  },err=>{
+    const msgs={1:"مجوز موقعیت‌یابی رد شده است؛ مجوز Location مرورگر را فعال کنید.",2:"موقعیت فعلی در دسترس نیست؛ GPS گوشی را بررسی کنید.",3:"زمان دریافت موقعیت تمام شد؛ دوباره تلاش کنید."};
+    setStatus(msgs[err.code]||("خطای GPS: "+err.message),"bad");
+    button.disabled=false;button.textContent="📍 موقعیت من";
+  },{enableHighAccuracy:true,maximumAge:0,timeout:30000});
 }
 
 function stopGPS(){
@@ -343,6 +374,7 @@ function exportTXT(){
  downloadFile("SurveyRTK.txt",s,"text/plain;charset=utf-8");
 }
 
+$("myLocation").addEventListener("click",showMyLocation);
 $("startGPS").addEventListener("click",startGPS);$("stopGPS").addEventListener("click",stopGPS);
 $("savePoint").addEventListener("click",registerPoint);
 $("clearForm").addEventListener("click",()=>{$("pointName").value="";$("pointNote").value="";});
