@@ -412,5 +412,10 @@ $("deleteAll").addEventListener("click",()=>{
 loadPoints();initMap();renderTable();renderDistTable();
 window.addEventListener("pagehide",()=>{if(watchID!==null)navigator.geolocation.clearWatch(watchID);});
 </script>
+
+<!-- SAHROUD COUNTER shared analytics; activates after central API configuration and user consent -->
+<script>window.SAHROUD_COUNTER_CONFIG={appId:"rtk",appName:"SAHROUD GPS RTK",version:"1.0"};</script>
+<script src="https://sahroud.github.io/A/counter/config.js"></script>
+<script src="https://sahroud.github.io/A/counter/client.js" defer></script>
 </body>
 </html>
