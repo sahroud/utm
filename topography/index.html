@@ -40,4 +40,9 @@ $('exportEst').onclick=()=>{readEst();let base=d.items.reduce((s,x)=>s+x.q*x.p,0
 function hydrate(){$('project').value=d.project.name||'';$('coord').value=d.project.coord;$('zone').value=d.project.zone;$('hemi').value=d.project.hemi;$('ep').value=d.project.name||'';$('loc').value=d.est.loc||'';$('currency').value=d.est.currency||'ریال';$('oh').value=d.est.oh;$('setup').value=d.est.setup;$('tax').value=d.est.tax;}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab));if(b.dataset.tab==='survey'&&map)setTimeout(()=>map.invalidateSize(),100);});
 hydrate();renderPts();renderItems();
-</script></body></html>
+</script>
+<!-- SAHROUD COUNTER shared analytics; activates after central API configuration and user consent -->
+<script>window.SAHROUD_COUNTER_CONFIG={appId:"topography",appName:"SAHROUD Topography",version:"1.0"};</script>
+<script src="https://sahroud.github.io/A/counter/config.js"></script>
+<script src="https://sahroud.github.io/A/counter/client.js" defer></script>
+</body></html>
