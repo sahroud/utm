@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102f43">
-<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.3.0">
+<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.3.1">
 <link rel="manifest" href="./manifest.json">
 <link rel="preload" as="style" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript><title>SAHROUD RTK | برداشت هوشمند</title>
 <style>
@@ -31,7 +31,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 .auto-capture-toast{position:fixed;z-index:9999;left:50%;top:18%;transform:translateX(-50%);background:#126b45;color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 5px 22px #0004;font-weight:bold;text-align:center;pointer-events:none;animation:autoToast 1s ease both}@keyframes autoToast{0%{opacity:0;transform:translate(-50%,-8px)}12%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}</style>
 <style>#selectedMap{height:430px;width:100%;border:1px solid var(--line);border-radius:10px;z-index:1;background:#eaf0f2}.map-coord{font:12px Tahoma;direction:ltr;text-align:left;line-height:1.7}.track-box{background:#f4f8fa;border:1px solid var(--line);padding:10px;border-radius:10px;margin-top:10px}</style><script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script></head>
 <body>
-<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill" id="versionPill">نسخه 2.2.3</span><div class="pill" id="connectionPill">در انتظار GPS</div></div></div></header>
+<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill" id="versionPill">نسخه 2.3.1</span><div class="pill" id="connectionPill">در انتظار GPS</div></div></div></header>
 <main>
 <nav class="tabs">
 <button class="tab active" data-tab="survey">برداشت</button><button class="tab" data-tab="points">نقاط</button><button class="tab" data-tab="selected">نقاط انتخاب‌شده</button><button class="tab" data-tab="calc">محاسبات</button><button class="tab" data-tab="settings">تنظیمات</button>
@@ -51,7 +51,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="status" id="quality">برای شروع، دسترسی موقعیت مکانی را فعال کنید. گوشی را در فضای باز و دور از موانع نگه دارید.</div>
 <div class="row" style="margin-top:10px"><button id="startBtn" class="green">اتصال GPS گوشی</button><button id="stopBtn" class="gray" disabled>توقف GPS</button></div>
 <div class="capture-box"><div class="capture-head"><strong>برداشت میانگین سه‌مرحله‌ای</strong><span id="tripletCount" class="pill">۰ از ۳</span></div><div class="progress"><span id="tripletBar"></span></div><div id="tripletStatus" class="hint">هر نقطه با سه برداشت مستقل ثبت می‌شود؛ میانگین مختصات در جدول می‌آید.</div>
-<div class="row" style="margin-top:9px"><button id="saveBtn" class="dark" disabled>برداشت دستی (۰/۳)</button><button id="autoBtn" class="orange">خودکار هر ۱ ثانیه: خاموش</button></div><button id="cancelTriplet" class="gray" style="width:100%;margin-top:7px">لغو برداشت نیمه‌تمام</button><div class="track-box"><h3>برداشت مسیر (Track)</h3><div class="row"><button id="trackStart" class="green">شروع مسیر</button><button id="trackPause" class="orange" disabled>مکث</button><button id="trackStop" class="red" disabled>پایان مسیر</button></div><div id="trackStatus" class="hint">هر نقطه مسیر با سه موقعیت تازه و میانگین آن ثبت می‌شود.</div><div class="hint" style="font-weight:bold;margin-top:8px">فهرست مسیرهای ذخیره‌شده</div><div id="trackList" style="overflow:auto"><div class="hint">هنوز مسیری ذخیره نشده است.</div></div><div class="row"><button id="trackResume" class="green" disabled>ادامه مسیر انتخاب‌شده</button><button id="trackRename" class="gray" disabled>تغییر نام</button><button id="trackDelete" class="red" disabled>حذف مسیر</button></div><div id="trackMap" style="height:260px;width:100%;border:1px solid var(--line);border-radius:9px;margin:8px 0;background:#eaf0f2"></div><div class="row"><button id="trackMark" class="dark">ثبت نقطه مهم</button></div><div class="row"><button id="exportTrackGpx" class="gray">خروجی GPX مسیر</button><button id="exportTrackGeo" class="gray">خروجی GeoJSON مسیر</button></div></div><div id="autoRunStatus" class="hint" style="margin-top:6px;padding:8px;border-radius:8px;background:#f5f8fa">ثبت خودکار خاموش است.</div></div>
+<div class="row" style="margin-top:9px"><button id="saveBtn" class="dark" disabled>برداشت دستی (۰/۳)</button><button id="autoBtn" class="orange">خودکار هر ۱ ثانیه: خاموش</button></div><button id="cancelTriplet" class="gray" style="width:100%;margin-top:7px">لغو برداشت نیمه‌تمام</button><div class="track-box"><h3>برداشت مسیر (Track)</h3><div class="row"><button id="trackStart" class="green">شروع مسیر</button><button id="trackPause" class="orange" disabled>مکث</button><button id="trackStop" class="red" disabled>پایان مسیر</button></div><div id="trackStatus" class="hint">هر نقطه مسیر با سه موقعیت تازه و میانگین آن ثبت می‌شود.</div><div class="hint" style="font-weight:bold;margin-top:8px">فهرست مسیرهای ذخیره‌شده</div><div id="trackList" style="overflow:auto"><div class="hint">هنوز مسیری ذخیره نشده است.</div></div><div class="row"><button id="trackResume" class="green" disabled>ادامه مسیر انتخاب‌شده</button><button id="trackRename" class="gray" disabled>تغییر نام</button><button id="trackDelete" class="red" disabled>حذف مسیر</button></div><div id="trackMap" style="height:260px;width:100%;border:1px solid var(--line);border-radius:9px;margin:8px 0;background:#eaf0f2"></div><div class="row"><button id="trackMark" class="dark">ثبت نقطه مهم</button></div><div class="row"><button id="exportTrackGpx" class="gray">خروجی GPX مسیر</button><button id="exportTrackGeo" class="gray">خروجی GeoJSON مسیر</button></div><div class="row" style="margin-top:7px"><button id="exportTrackCsv" class="gray">CSV کامل مسیر</button><button id="exportTrackDxf" class="dark">DXF مسیر (UTM)</button></div><div class="row" style="margin-top:7px"><button id="exportTrackReport" class="green">گزارش کیفیت مسیر</button></div></div><div id="autoRunStatus" class="hint" style="margin-top:6px;padding:8px;border-radius:8px;background:#f5f8fa">ثبت خودکار خاموش است.</div></div>
 <div class="row" style="margin-top:8px"><button id="mapBtn" class="gray" disabled>نمایش موقعیت روی نقشه</button><button id="compassBtn" class="gray">فعال‌سازی قطب‌نما</button></div>
 </div>
 <div class="card">
@@ -164,7 +164,7 @@ const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,trackActive=false,trackPaused=false,trackBatch=[],selectedTrackId=null,lastTrackSampleTime=0,lastTrackPointTime=0,trackMap=null,trackLine=null,trackMarkers=null,selectedMap=null,selectedMapLayers=null,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,serialGst=null,orientation=null;
 let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
-const APP_VERSION='2.3.0';
+const APP_VERSION='2.3.1';
 const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',serialBaud:9600,vibrate:true,sound:false,trackMode:'time',trackIntervalSec:1,trackDistanceM:2};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{}),avgSeconds:3};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}if(!Array.isArray(db.tracks))db.tracks=[];const pending=db.tracks.find(t=>t.status==='recording');if(pending){pending.status='paused';selectedTrackId=pending.id;}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
@@ -237,6 +237,49 @@ function trackTick(){if(!trackActive||trackPaused||(!watch&&!serialPort))return;
 function markTrackPoint(){if(!trackActive||trackPaused)return;const x=latest;if(!x||(Date.now()-x.time)/1000>Number(db.settings.maxAge)){status('برای ثبت نقطه مهم، منتظر موقعیت تازه GPS بمانید.','bad');return;}if(x.accuracy>Number(db.settings.maxAcc)&&!confirm('دقت اعلامی از حد مجاز بیشتر است. نقطه مهم با همین دقت ثبت شود؟'))return;const t=currentTrack();const name=prompt('عنوان نقطه مهم را وارد کنید:','نقطه مهم '+((t?.points||[]).filter(p=>p.manual).length+1));if(name===null)return;t.points.push({lat:x.lat,lon:x.lon,alt:x.alt,accuracy:x.accuracy,time:new Date(x.time).toISOString(),samples:1,source:x.source||'GPS گوشی',fix:serialFix?.fix||'PHONE',manual:true,name:name.trim()||'نقطه مهم'});lastTrackPointTime=Date.now();persist();drawTrackMap();updateTrackUI();status('نقطه مهم به مسیر افزوده شد.','good');}
 function exportTrackGeo(){const t=currentTrack();if(!t?.points?.length){alert('ابتدا یک مسیر برداشت کنید.');return;}download('sahroud-track.geojson',JSON.stringify({type:'FeatureCollection',features:[{type:'Feature',properties:{name:t.name,start:t.start,end:t.end,length_m:trackLength(t)},geometry:{type:'LineString',coordinates:t.points.map(p=>[p.lon,p.lat,p.alt??0])}},{type:'Feature',properties:{name:t.name+' • نقاط مهم'},geometry:{type:'MultiPoint',coordinates:t.points.filter(p=>p.manual).map(p=>[p.lon,p.lat,p.alt??0])}}]},null,2),'application/geo+json');}
 function exportTrackGpx(){const t=currentTrack();if(!t?.points?.length){alert('ابتدا یک مسیر برداشت کنید.');return;}const pts=t.points.map(p=>'<trkpt lat="'+p.lat+'" lon="'+p.lon+'">'+(Number.isFinite(p.alt)?'<ele>'+p.alt+'</ele>':'')+'<time>'+p.time+'</time>'+(p.manual?'<name>'+esc(p.name||'نقطه مهم')+'</name><type>waypoint</type>':'')+'</trkpt>').join('');download('sahroud-track.gpx','<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="SAHROUD RTK" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>'+esc(t.name)+'</name><trkseg>'+pts+'</trkseg></trk></gpx>','application/gpx+xml');}
+
+function trackForExport(){const t=currentTrack();if(!t||!Array.isArray(t.points)||!t.points.length){alert('ابتدا یک مسیر دارای نقطه انتخاب کنید.');return null;}return t;}
+function exportTrackCsv(){
+ const t=trackForExport();if(!t)return;
+ const rows=[['Track_ID','Track_Name','Point_No','Timestamp','Latitude_WGS84','Longitude_WGS84','Altitude_m','Accuracy_m','Spread_m','Sample_Count','Source','Fix','Manual_Point','Point_Name','Speed_mps','Heading_deg']];
+ t.points.forEach((p,i)=>rows.push([t.id,t.name,i+1,p.time,p.lat,p.lon,p.alt,p.accuracy,p.spread,p.samples??(p.manual?1:3),p.source,p.fix,p.manual?'YES':'NO',p.manual?(p.name||'نقطه مهم'):'',p.speed,p.heading]));
+ download('sahroud-track-'+String(t.id).replace(/[^a-zA-Z0-9_-]/g,'')+'.csv','\ufeff'+csv(rows),'text/csv;charset=utf-8');
+}
+function exportTrackDxf(){
+ const t=trackForExport();if(!t)return;
+ const projected=t.points.map((p,i)=>({p,i,u:toUtm(p.lat,p.lon)})),zones=[...new Set(projected.map(x=>x.u.zone))],hems=[...new Set(projected.map(x=>x.u.hem))];
+ if(zones.length!==1||hems.length!==1){alert('مسیر از بیش از یک زون یا نیم‌کره UTM عبور می‌کند؛ برای جلوگیری از خطای مختصات، DXF ساخته نشد.');return;}
+ const clean=v=>String(v??'').replace(/[\\r\\n\\t]/g,' ').replace(/\s+/g,' ').slice(0,180);
+ const d=['0','SECTION','2','HEADER','9','$ACADVER','1','AC1009','9','$INSUNITS','70','6','0','ENDSEC',
+ '0','SECTION','2','TABLES','0','TABLE','2','LAYER','70','4'];
+ [['TRACK',7],['TRACK_POINTS',5],['TRACK_MARKS',1],['TRACK_LABELS',3]].forEach(([name,color])=>d.push('0','LAYER','2',name,'70','0','62',String(color),'6','CONTINUOUS'));
+ d.push('0','ENDTAB','0','ENDSEC','0','SECTION','2','ENTITIES');
+ if(projected.length>=2){
+  d.push('0','POLYLINE','8','TRACK','66','1','70','8');
+  projected.forEach(({p,u})=>d.push('0','VERTEX','8','TRACK','10',u.E.toFixed(3),'20',u.N.toFixed(3),'30',(Number.isFinite(p.alt)?Number(p.alt):0).toFixed(3),'70','32'));
+  d.push('0','SEQEND','8','TRACK');
+ }
+ projected.forEach(({p,u},i)=>{
+  d.push('0','POINT','8',p.manual?'TRACK_MARKS':'TRACK_POINTS','10',u.E.toFixed(3),'20',u.N.toFixed(3),'30',(Number.isFinite(p.alt)?Number(p.alt):0).toFixed(3));
+  d.push('0','TEXT','8','TRACK_LABELS','10',u.E.toFixed(3),'20',(u.N+1.2).toFixed(3),'30',(Number.isFinite(p.alt)?Number(p.alt):0).toFixed(3),'40','1.5','1',clean(p.manual?(p.name||'MARK-'+(i+1)):'P'+(i+1)));
+ });
+ d.push('0','ENDSEC','0','EOF');
+ download('sahroud-track-UTM'+zones[0]+'.dxf',d.join('\\r\\n'),'application/dxf');
+}
+function exportTrackReport(){
+ const t=trackForExport();if(!t)return;
+ const pts=t.points,acc=pts.map(p=>Number(p.accuracy)).filter(Number.isFinite),fixCounts={};
+ pts.forEach(p=>{const k=String(p.fix||'نامشخص');fixCounts[k]=(fixCounts[k]||0)+1;});
+ const start=t.start?new Date(t.start):new Date(pts[0].time),end=t.end?new Date(t.end):new Date(pts[pts.length-1].time);
+ const duration=Math.max(0,(end-start)/1000),fmt=d=>Number.isFinite(d.getTime())?d.toLocaleString('fa-IR'):'نامشخص';
+ const sorted=[...acc].sort((a,b)=>a-b),mean=acc.length?acc.reduce((a,b)=>a+b,0)/acc.length:null;
+ const lines=['گزارش برداشت مسیر SAHROUD RTK','نام پروژه: '+(db.project?.name||'—'),'نام مسیر: '+t.name,'شناسه مسیر: '+t.id,'وضعیت: '+(t.status==='completed'?'پایان‌یافته':t.status==='paused'?'مکث':'در حال برداشت'),'سیستم مختصات خروجی DXF: WGS84 / UTM zone '+[...new Set(pts.map(p=>toUtm(p.lat,p.lon).zone))].join(', '),'زمان شروع: '+fmt(start),'زمان پایان/آخرین نقطه: '+fmt(end),'مدت: '+Math.floor(duration/3600)+' ساعت و '+Math.floor(duration%3600/60)+' دقیقه و '+Math.floor(duration%60)+' ثانیه','تعداد کل نقاط: '+pts.length,'نقاط مهم: '+pts.filter(p=>p.manual).length,'طول مسیر: '+trackLength(t).toFixed(3)+' متر','تعداد نقاط دارای دقت ثبت‌شده: '+acc.length,'کمترین دقت اعلامی: '+(acc.length?Math.min(...acc).toFixed(2)+' m':'ناموجود'),'بیشترین دقت اعلامی: '+(acc.length?Math.max(...acc).toFixed(2)+' m':'ناموجود'),'میانگین دقت اعلامی: '+(mean!==null?mean.toFixed(2)+' m':'ناموجود'),'میانه دقت اعلامی: '+(sorted.length?sorted[Math.floor((sorted.length-1)/2)].toFixed(2)+' m':'ناموجود'),'توزیع Fix / منبع کیفیت:'];
+ Object.entries(fixCounts).forEach(([k,v])=>lines.push(' - '+k+': '+v));
+ lines.push('','توضیح: دقت‌های درج‌شده همان مقادیر گزارش‌شده توسط گیرنده/گوشی هستند و تضمین دقت نقشه‌برداری نیستند. برای برداشت‌های حساس، کنترل مبنا و صحت‌سنجی میدانی لازم است.');
+ const report=lines.join('\\r\\n');
+ download('sahroud-track-report.txt','\\ufeff'+report,'text/plain;charset=utf-8');
+ alert('گزارش مسیر آماده شد. طول: '+trackLength(t).toFixed(2)+' متر | نقاط: '+pts.length+' | نقاط مهم: '+pts.filter(p=>p.manual).length);
+}
 
 
 function showReleaseNotes(){$('versionPill').textContent='نسخه '+APP_VERSION;}
@@ -480,7 +523,7 @@ $('addSelectedPoints').onclick=()=>{if(!(db.selectedPointIds||[]).length){alert(
 $('selectedSelectAll').onclick=()=>setPointSelection(db.points.map(p=>p.id));
 $('removeSelectedPoints').onclick=()=>{if(!(db.selectedPointIds||[]).length)return;setPointSelection([]);};
 $('deleteSelectedPoints').onclick=()=>{let ids=new Set(db.selectedPointIds||[]);if(!ids.size)return;if(!confirm('آیا نقاط انتخاب‌شده به‌طور دائمی از پروژه حذف شوند؟'))return;db.points=db.points.filter(p=>!ids.has(p.id));db.selectedPointIds=[];persist();renderPoints();renderSelects();};
-$('exportSelectedCsv').onclick=exportSelectedCsv;$('exportSelectedGeo').onclick=exportSelectedGeo;$('fitSelectedMap').onclick=drawSelectedPlot;$('trackStart').onclick=startTrack;$('trackPause').onclick=pauseTrack;$('trackStop').onclick=stopTrack;$('trackMark').onclick=markTrackPoint;$('trackResume').onclick=resumeTrack;$('trackRename').onclick=renameTrack;$('trackDelete').onclick=deleteTrack;$('trackList').onchange=e=>{if(e.target.name==='trackSelect')selectTrack(e.target.value);};$('exportTrackGeo').onclick=exportTrackGeo;$('exportTrackGpx').onclick=exportTrackGpx;
+$('exportSelectedCsv').onclick=exportSelectedCsv;$('exportSelectedGeo').onclick=exportSelectedGeo;$('fitSelectedMap').onclick=drawSelectedPlot;$('trackStart').onclick=startTrack;$('trackPause').onclick=pauseTrack;$('trackStop').onclick=stopTrack;$('trackMark').onclick=markTrackPoint;$('trackResume').onclick=resumeTrack;$('trackRename').onclick=renameTrack;$('trackDelete').onclick=deleteTrack;$('trackList').onchange=e=>{if(e.target.name==='trackSelect')selectTrack(e.target.value);};$('exportTrackGeo').onclick=exportTrackGeo;$('exportTrackGpx').onclick=exportTrackGpx;$('exportTrackCsv').onclick=exportTrackCsv;$('exportTrackDxf').onclick=exportTrackDxf;$('exportTrackReport').onclick=exportTrackReport;
 $('newProject').onclick=()=>{if(db.points.length&&!confirm('پروژه فعلی در پشتیبان ذخیره نشده است. پروژه جدید ایجاد شود؟'))return;db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{...db.settings}};$('projectName').value=db.project.name;persist();renderPoints();renderSelects();};
 $('projectName').onchange=()=>{db.project.name=$('projectName').value.trim()||'پروژه بدون نام';persist();};
 $('exportJson').onclick=()=>download('sahroud-project-backup.json',JSON.stringify(db,null,2),'application/json');
