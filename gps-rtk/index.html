@@ -206,29 +206,49 @@ function joinContourSegments(segments){
  }
  return result;
 }
+function pointInPolygon(p,poly){
+ let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+  const a=poly[i],b=poly[j],cross=((a.y>p.y)!==(b.y>p.y))&&(p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x);
+  if(cross)inside=!inside;
+ }return inside;
+}
+function clipContourSegments(segments,poly){
+ if(poly.length<3)return segments;
+ const out=[],eps=1e-8;
+ for(const s of segments){let ts=[0,1],dx=s.b.x-s.a.x,dy=s.b.y-s.a.y;
+  for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],ex=b.x-a.x,ey=b.y-a.y,den=dx*ey-dy*ex;if(Math.abs(den)<eps)continue;
+   const qx=a.x-s.a.x,qy=a.y-s.a.y,t=(qx*ey-qy*ex)/den,u=(qx*dy-qy*dx)/den;if(t>eps&&t<1-eps&&u>=-eps&&u<=1+eps)ts.push(t);
+  }
+  ts.sort((a,b)=>a-b);ts=ts.filter((t,i)=>i===0||t-ts[i-1]>eps);
+  for(let i=0;i<ts.length-1;i++){const t0=ts[i],t1=ts[i+1],tm=(t0+t1)/2,mid={x:s.a.x+tm*dx,y:s.a.y+tm*dy};if(!pointInPolygon(mid,poly))continue;
+   const at=t=>({x:s.a.x+t*dx,y:s.a.y+t*dy});const a=at(t0),b=at(t1);if(Math.hypot(a.x-b.x,a.y-b.y)>eps)out.push({level:s.level,a,b});
+  }
+ }
+ return out;
+}
 function makeTopo(){
  lastTopoModel=null;
  let raw=topoPoints(),cv=$('topoCanvas'),ctx=cv.getContext('2d'),w=Math.max(280,cv.clientWidth||320),h=380,dpr=Math.min(2,window.devicePixelRatio||1);cv.width=w*dpr;cv.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle='#f8fbfc';ctx.fillRect(0,0,w,h);
  $('topoCount').textContent=raw.length;
  if(raw.length<3){$('topoMin').textContent=$('topoMax').textContent=$('topoRelief').textContent='—';$('topoMessage').textContent='حداقل سه نقطه با ارتفاع معتبر لازم است. ارتفاع صفر معتبر است، اما مقدار خالی پذیرفته نمی‌شود.';return;}
  let lat0=raw.reduce((a,x)=>a+x.p.lat,0)/raw.length,lon0=raw.reduce((a,x)=>a+x.p.lon,0)/raw.length,cos=Math.cos(lat0*Math.PI/180);
- let pts=raw.map(x=>({x:(x.p.lon-lon0)*111320*cos,y:(x.p.lat-lat0)*110540,z:x.z,ref:x.p})),minZ=Math.min(...pts.map(p=>p.z)),maxZ=Math.max(...pts.map(p=>p.z));
+ let pts=raw.map(x=>({x:(x.p.lon-lon0)*111320*cos,y:(x.p.lat-lat0)*110540,z:x.z,ref:x.p})),boundaryRaw=boundaryPoints(),boundary=boundaryRaw.length>=3?boundaryRaw.map(p=>({x:(p.lon-lon0)*111320*cos,y:(p.lat-lat0)*110540,ref:p})):[],minZ=Math.min(...pts.map(p=>p.z)),maxZ=Math.max(...pts.map(p=>p.z));
  $('topoMin').textContent=num(minZ,2)+' m';$('topoMax').textContent=num(maxZ,2)+' m';$('topoRelief').textContent=num(maxZ-minZ,2)+' m';
  let minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y)),pad=35,scale=Math.min((w-2*pad)/Math.max(1,maxX-minX),(h-2*pad)/Math.max(1,maxY-minY)),ox=(w-(maxX-minX)*scale)/2,oy=(h-(maxY-minY)*scale)/2;
  let screen=p=>({x:ox+(p.x-minX)*scale,y:h-(oy+(p.y-minY)*scale)}),tris=triangulateTin(pts);
  if(!tris.length){$('topoMessage').textContent='نقاط هم‌خط یا هندسه نامعتبر است؛ برای تشکیل TIN نقاط ارتفاعی بیشتری با پراکندگی مکانی مناسب برداشت کنید.';return;}
- ctx.strokeStyle='#9aabb4';ctx.lineWidth=1;for(let t of tris){let q=t.map(screen);ctx.beginPath();ctx.moveTo(q[0].x,q[0].y);ctx.lineTo(q[1].x,q[1].y);ctx.lineTo(q[2].x,q[2].y);ctx.closePath();ctx.stroke();}
+ ctx.save();if(boundary.length>=3){ctx.beginPath();boundary.forEach((p,i)=>{let q=screen(p);if(i===0)ctx.moveTo(q.x,q.y);else ctx.lineTo(q.x,q.y);});ctx.closePath();ctx.clip();}ctx.strokeStyle='#9aabb4';ctx.lineWidth=1;for(let t of tris){let q=t.map(screen);ctx.beginPath();ctx.moveTo(q[0].x,q[0].y);ctx.lineTo(q[1].x,q[1].y);ctx.lineTo(q[2].x,q[2].y);ctx.closePath();ctx.stroke();}
  let step=Number($('contourInterval').value)||1,first=Math.ceil(minZ/step)*step,segments=[];
  if(maxZ>minZ)for(let level=first;level<=maxZ+1e-8;level+=step){for(let t of tris){let hits=[];for(let i=0;i<3;i++){let a=t[i],b=t[(i+1)%3];if((level>=Math.min(a.z,b.z)&&level<Math.max(a.z,b.z))||(Math.abs(level-a.z)<1e-9&&Math.abs(level-b.z)>1e-9)){let f=(level-a.z)/(b.z-a.z);if(f>=0&&f<=1){let v={x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};if(!hits.some(z=>Math.hypot(z.x-v.x,z.y-v.y)<1e-6))hits.push(v);}}}if(hits.length===2)segments.push({level,a:hits[0],b:hits[1]});}}
- let contours=joinContourSegments(segments);ctx.lineWidth=1.6;for(let line of contours){ctx.beginPath();line.points.forEach((p,i)=>{let q=screen(p);if(i===0)ctx.moveTo(q.x,q.y);else ctx.lineTo(q.x,q.y);});ctx.strokeStyle='#b06a25';ctx.stroke();}
- pts.forEach((p,i)=>{let q=screen(p);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#176b87';ctx.fill();ctx.fillStyle='#18313e';ctx.font='10px Tahoma';ctx.fillText(num(p.z,1),q.x+6,q.y-6);});
- lastTopoModel={pts,tris,segments,contours,lat0,lon0,cos,step,minZ,maxZ};$('topoMessage').textContent='TIN: '+tris.length+' مثلث | خطوط پیوسته منحنی میزان: '+contours.length+' ('+segments.length+' قطعه) | فاصله تراز: '+step+' متر. درون‌یابی فقط داخل پوش محدب نقاط انجام شده و مرزهای مقعر زمین هنوز برش نخورده‌اند.';
+ if(boundary.length>=3)segments=clipContourSegments(segments,boundary);let contours=joinContourSegments(segments);ctx.lineWidth=1.6;for(let line of contours){ctx.beginPath();line.points.forEach((p,i)=>{let q=screen(p);if(i===0)ctx.moveTo(q.x,q.y);else ctx.lineTo(q.x,q.y);});ctx.strokeStyle='#b06a25';ctx.stroke();}
+ pts.filter(p=>boundary.length<3||pointInPolygon(p,boundary)).forEach(p=>{let q=screen(p);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#176b87';ctx.fill();ctx.fillStyle='#18313e';ctx.font='10px Tahoma';ctx.fillText(num(p.z,1),q.x+6,q.y-6);});if(boundary.length>=3){ctx.beginPath();boundary.forEach((p,i)=>{let q=screen(p);if(i===0)ctx.moveTo(q.x,q.y);else ctx.lineTo(q.x,q.y);});ctx.closePath();ctx.strokeStyle='#176b87';ctx.lineWidth=2;ctx.stroke();}ctx.restore();
+ lastTopoModel={pts,tris,segments,contours,boundary,lat0,lon0,cos,step,minZ,maxZ};$('topoMessage').textContent='TIN: '+tris.length+' مثلث | خطوط پیوسته منحنی میزان: '+contours.length+' ('+segments.length+' قطعه) | فاصله تراز: '+step+' متر. '+(boundary.length>=3?'ترسیم و منحنی‌ها به مرز انتخابی زمین محدود شده‌اند.':'مرز معتبر انتخاب نشده؛ پوش محدب نقاط نمایش داده شده است.')+'؛ دقت مدل وابسته به تراکم و کیفیت نقاط ارتفاعی است.';
 }
 function exportTopoDxf(){
  if(!lastTopoModel){alert('ابتدا مدل TIN و منحنی میزان را بسازید.');return;}
  const m=lastTopoModel,zoneSet=new Set(),projected=[];
  const localToGeo=p=>({lat:m.lat0+p.y/110540,lon:m.lon0+p.x/(111320*m.cos)});
- for(const p of m.pts){const u=toUtm(p.ref.lat,p.ref.lon);zoneSet.add(u.zone);projected.push({p,u});}
+ for(const p of m.pts){if(m.boundary.length>=3&&!pointInPolygon(p,m.boundary))continue;const u=toUtm(p.ref.lat,p.ref.lon);zoneSet.add(u.zone);projected.push({p,u});}
  const contourUtm=m.contours.map(line=>({level:line.level,points:line.points.map(p=>{const g=localToGeo(p);const u=toUtm(g.lat,g.lon);zoneSet.add(u.zone);return u;})}));
  if(zoneSet.size!==1){alert('نقاط یا خطوط تراز در بیش از یک زون UTM قرار می‌گیرند؛ خروجی DXF برای جلوگیری از خطای مختصات لغو شد.');return;}
  let d=['0','SECTION','2','HEADER','9','$INSUNITS','70','6','0','ENDSEC','0','SECTION','2','ENTITIES'];
