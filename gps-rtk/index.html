@@ -22,6 +22,10 @@ label{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}input,sel
 table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-x:auto;white-space:nowrap}td,th{border-bottom:1px solid var(--line);padding:8px;text-align:right}th{color:var(--muted);background:#f5f8fa}
 .hidden{display:none!important}.divider{height:1px;background:var(--line);margin:12px 0}.footer{text-align:center;color:#80929a;font-size:10px;margin:18px 0}.progress{height:7px;background:#e7eef1;border-radius:20px;overflow:hidden;margin-top:7px}.progress span{display:block;height:100%;background:var(--teal);width:0}
 @media(min-width:720px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.twocol{display:grid;grid-template-columns:1.1fr .9fr;gap:11px}.tabs{max-width:650px}.tab{flex:0 0 125px}}
+
+#topoPrintSheet{display:none}
+@page{size:A4 landscape;margin:8mm}
+@media print{body.printing-topo{background:#fff!important;color:#111!important}body.printing-topo>*:not(#topoPrintSheet){display:none!important}body.printing-topo #topoPrintSheet{display:block!important;font-family:Tahoma,Arial,sans-serif;color:#111;direction:rtl;font-size:9pt}#topoPrintSheet .print-head{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #18313e;padding-bottom:5mm;margin-bottom:4mm}#topoPrintSheet h1{font-size:17pt;margin:0}#topoPrintSheet h2{font-size:11pt;margin:3mm 0 2mm;color:#18313e}#topoPrintSheet .print-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:2mm;margin-bottom:3mm}#topoPrintSheet .print-meta div{border:1px solid #999;padding:2mm}#topoPrintSheet .print-maps{display:grid;grid-template-columns:1fr 1fr;gap:4mm}#topoPrintSheet .print-map{border:1px solid #777;padding:2mm;min-height:65mm}#topoPrintSheet img{width:100%;max-height:76mm;object-fit:contain}#topoPrintSheet table{width:100%;border-collapse:collapse;font-size:7.5pt}#topoPrintSheet th,#topoPrintSheet td{border:1px solid #888;padding:1.2mm;text-align:center}#topoPrintSheet .print-break{break-before:page;page-break-before:always}#topoPrintSheet .print-note{font-size:8pt;margin-top:2mm}#topoPrintSheet .print-footer{border-top:1px solid #777;margin-top:4mm;padding-top:2mm;font-size:8pt;display:flex;justify-content:space-between}}
 </style>
 </head>
 <body>
@@ -98,6 +102,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <canvas id="profileCanvas" height="260" style="width:100%;height:260px;display:block;background:#f8fbfc;border:1px solid var(--line);border-radius:10px;margin-top:10px"></canvas>
 <div id="profileSummary" class="hint">برای محاسبه پروفیل، ابتدا مدل TIN را بسازید و دو نقطه دارای مختصات و ارتفاع معتبر انتخاب کنید.</div>
 <div id="profileTable" style="overflow:auto;margin-top:8px"></div>
+<div class="row" style="margin-top:10px"><button id="printTopoReport" class="green">تهیه نقشه و گزارش چاپی / PDF</button></div>
 </div></div>
 </section>
 <section id="calc" class="panel">
@@ -146,6 +151,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 </section>
 <div class="footer">SAHROUD • ابزار برداشت و کنترل کیفیت • داده‌ها روی دستگاه شما ذخیره می‌شوند</div>
 </main>
+<div id="topoPrintSheet"></div>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), num=(v,d=2)=>Number.isFinite(v)?v.toFixed(d):'—';
@@ -300,6 +306,17 @@ function exportTopoDxf(){
  d.push('0','ENDSEC','0','EOF');download('sahroud-topography.dxf',d.join('\r\n'),'application/dxf');
  $('topoMessage').textContent+=' | خروجی DXF آماده شد: '+count+' خط تراز و '+projected.length+' نقطه ارتفاعی.';
 }
+
+function printTopoReport(){
+ if(!lastTopoModel){alert('ابتدا مدل TIN و منحنی میزان را بسازید.');return;}
+ const m=lastTopoModel,zoneSet=new Set(),rows=db.points.map((p,i)=>{const u=toUtm(p.lat,p.lon);zoneSet.add(u.zone);return{p,i,u};}),ztext=zoneSet.size===1?'UTM '+[...zoneSet][0]:'چند زون UTM';
+ const topoImg=$('topoCanvas').toDataURL('image/png'),profileReady=!!lastProfile,profileImg=profileReady?$('profileCanvas').toDataURL('image/png'):'';
+ const pointRows=rows.map(({p,i,u})=>'<tr><td>'+(i+1)+'</td><td>'+esc(p.name)+'</td><td>'+Number(p.lat).toFixed(7)+'</td><td>'+Number(p.lon).toFixed(7)+'</td><td>'+num(u.E,3)+'</td><td>'+num(u.N,3)+'</td><td>'+(p.alt!==null&&p.alt!==''?num(Number(p.alt),3):'—')+'</td><td>'+(isBoundary(p)?'بله':'خیر')+'</td></tr>').join('');
+ const profileRows=profileReady?lastProfile.rows.filter((r,i)=>i===0||i===lastProfile.rows.length-1||i%5===0).map(r=>'<tr><td>'+num(r.distance,2)+'</td><td>'+num(r.elevation,3)+'</td><td>'+r.lat.toFixed(7)+'</td><td>'+r.lon.toFixed(7)+'</td></tr>').join(''):'<tr><td colspan="4">پروفیل محاسبه نشده است؛ در صورت نیاز ابتدا پروفیل را بسازید.</td></tr>';
+ const now=new Date().toLocaleString('fa-IR');
+ $('topoPrintSheet').innerHTML='<div class="print-head"><div><h1>نقشه توپوگرافی SAHROUD</h1><div>گزارش برداشت، مدل رقومی زمین و منحنی میزان</div></div><div>تاریخ تهیه: '+esc(now)+'</div></div><div class="print-meta"><div><b>پروژه:</b> '+esc(db.project?.name||'—')+'</div><div><b>سیستم مختصات:</b> '+ztext+'</div><div><b>فاصله منحنی میزان:</b> '+num(m.step,2)+' متر</div><div><b>نقاط ارتفاع‌دار:</b> '+m.pts.length+'</div><div><b>کمینه ارتفاع:</b> '+num(m.minZ,3)+' متر</div><div><b>بیشینه ارتفاع:</b> '+num(m.maxZ,3)+' متر</div><div><b>اختلاف ارتفاع:</b> '+num(m.maxZ-m.minZ,3)+' متر</div><div><b>تعداد مثلث TIN:</b> '+m.tris.length+'</div></div><div class="print-maps"><div class="print-map"><h2>مدل TIN و منحنی میزان</h2><img src="'+topoImg+'" alt="مدل توپوگرافی"><div class="print-note">نمای شماتیک مدل؛ مرز زمین در صورت تعریف نقاط مرزی اعمال شده است. برای مختصات دقیق به جدول UTM مراجعه شود.</div></div><div class="print-map"><h2>پروفیل طولی / عرضی</h2>'+(profileReady?'<img src="'+profileImg+'" alt="پروفیل"><div class="print-note">مسیر: '+esc(lastProfile.start)+' تا '+esc(lastProfile.end)+' | طول مسیر: '+num(lastProfile.length,2)+' متر</div>':'<div class="print-note">پروفیلی برای چاپ تهیه نشده است.</div>')+'</div></div><h2>جدول نقاط برداشت و مختصات</h2><table><thead><tr><th>ردیف</th><th>نام نقطه</th><th>Latitude</th><th>Longitude</th><th>E (m)</th><th>N (m)</th><th>Z (m)</th><th>مرزی</th></tr></thead><tbody>'+pointRows+'</tbody></table><div class="print-break"><h2>جدول نمونه‌های پروفیل</h2><table><thead><tr><th>فاصله از ابتدا (m)</th><th>ارتفاع (m)</th><th>Latitude</th><th>Longitude</th></tr></thead><tbody>'+profileRows+'</tbody></table><div class="print-note">توضیح فنی: مختصات UTM با تبدیل محاسباتی از مختصات جغرافیایی تولید شده‌اند. صحت نقشه نهایی به دقت برداشت، مبنای مختصات، تراکم نقاط و کنترل میدانی وابسته است. این گزارش به‌تنهایی جایگزین نقشه‌برداری ثبتی یا کنترل مهندس نقشه‌بردار نیست.</div><div class="print-footer"><span>SAHROUD RTK | نقشه توپوگرافی</span><span>مقیاس ترسیمی: بدون مقیاس ثابت؛ چاپگر را روی اندازه واقعی صفحه تنظیم کنید.</span></div></div>';
+ document.body.classList.add('printing-topo');window.addEventListener('afterprint',()=>document.body.classList.remove('printing-topo'),{once:true});window.print();
+}
 function targetUpdate(){let p=selected('targetPoint');if(!p||!latest){$('targetDistance').textContent='—';$('targetAz').textContent='—';return;}let d=distance(latest,p),b=bearing(latest,p);$('targetDistance').textContent=num(d,2)+' m';$('targetAz').textContent=num(b,1)+'°';$('targetStatus').textContent='جهت تقریبی از شمال: '+num(b,1)+' درجه؛ فاصله مستقیم: '+num(d,2)+' متر. جهت‌نمای گوشی را با کالیبراسیون مناسب به‌کار ببرید.';}
 function download(name,content,type){let blob=new Blob([content],{type}),a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 function csv(rows){return rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');}
@@ -320,7 +337,7 @@ $('startBtn').onclick=startGps;$('stopBtn').onclick=stopGps;$('saveBtn').onclick
 $('compassBtn').onclick=async()=>{try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){let p=await DeviceOrientationEvent.requestPermission();if(p!=='granted')throw Error('مجوز قطب‌نما داده نشد');}window.addEventListener('deviceorientationabsolute',onOrientation,true);window.addEventListener('deviceorientation',onOrientation,true);compassEnabled=true;status('حسگر جهت‌یابی فعال شد.','good');}catch(e){status('قطب‌نما در این دستگاه در دسترس نیست یا مجوز داده نشد.','bad');}};
 function onOrientation(e){let h=Number.isFinite(e.webkitCompassHeading)?e.webkitCompassHeading:Number.isFinite(e.alpha)?(360-e.alpha)%360:NaN;if(Number.isFinite(h))orientation=h;render();}
 $('serialBtn').onclick=connectSerial;$('serialStop').onclick=disconnectSerial;$('buildTopo').onclick=makeTopo;$('exportTopoDxf').onclick=exportTopoDxf;$('exportTin3d').onclick=exportTin3d;$('buildProfile').onclick=buildProfile;$('exportProfileCsv').onclick=exportProfileCsv;$('contourInterval').onchange=()=>{if($('topoCount').textContent!=='—')makeTopo();};
-$('lineCalc').onclick=calcLine;$('utmCalc').onclick=calcUtm;$('areaCalc').onclick=calcArea;$('targetPoint').onchange=targetUpdate;$('p1').onchange=()=>{};$('p2').onchange=()=>{};
+$('printTopoReport').onclick=printTopoReport;$('lineCalc').onclick=calcLine;$('utmCalc').onclick=calcUtm;$('areaCalc').onclick=calcArea;$('targetPoint').onchange=targetUpdate;$('p1').onchange=()=>{};$('p2').onchange=()=>{};
 $('pointList').onclick=e=>{let b=e.target.closest('button[data-action]');if(!b)return;let p=db.points.find(x=>x.id===b.dataset.id);if(!p)return;if(b.dataset.action==='boundary'){p.boundary=!isBoundary(p);persist();renderPoints();}else if(b.dataset.action==='delete'){if(confirm('این نقطه حذف شود؟')){db.points=db.points.filter(x=>x.id!==p.id);persist();renderPoints();renderSelects();}}else if(b.dataset.action==='up'||b.dataset.action==='down'){let i=db.points.findIndex(x=>x.id===p.id),j=i+(b.dataset.action==='up'?-1:1);if(j>=0&&j<db.points.length){[db.points[i],db.points[j]]=[db.points[j],db.points[i]];persist();renderPoints();renderSelects();}}else{$('targetPoint').value=p.id;document.querySelector('[data-tab="calc"]').click();targetUpdate();}};
 $('newProject').onclick=()=>{if(db.points.length&&!confirm('پروژه فعلی در پشتیبان ذخیره نشده است. پروژه جدید ایجاد شود؟'))return;db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{...db.settings}};$('projectName').value=db.project.name;persist();renderPoints();renderSelects();};
 $('projectName').onchange=()=>{db.project.name=$('projectName').value.trim()||'پروژه بدون نام';persist();};
