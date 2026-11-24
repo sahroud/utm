@@ -276,7 +276,7 @@ function drawProfile(){
  $('profileSummary').textContent='پروفیل '+lastProfile.start+' تا '+lastProfile.end+' | طول مسیر: '+num(lastProfile.length,2)+' متر | نقاط نمونه معتبر: '+rows.length+' از 101 | کمینه/بیشینه ارتفاع در مسیر: '+num(minZ,2)+' / '+num(maxZ,2)+' متر.';
  $('profileTable').innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr><th>فاصله (m)</th><th>ارتفاع (m)</th><th>عرض جغرافیایی</th><th>طول جغرافیایی</th></tr></thead><tbody>'+rows.filter((r,i)=>i===0||i===rows.length-1||i%10===0).map(r=>'<tr><td>'+num(r.distance,2)+'</td><td>'+num(r.elevation,3)+'</td><td>'+r.lat.toFixed(7)+'</td><td>'+r.lon.toFixed(7)+'</td></tr>').join('')+'</tbody></table>';
 }
-function exportProfileCsv(){if(!lastProfile){alert('ابتدا پروفیل را محاسبه کنید.');return;}download('sahroud-profile.csv','\\ufeff'+csv([['Distance_m','Elevation_m','Latitude','Longitude'],...lastProfile.rows.map(r=>[r.distance,r.elevation,r.lat,r.lon])]),'text/csv;charset=utf-8');}
+function exportProfileCsv(){if(!lastProfile){alert('ابتدا پروفیل را محاسبه کنید.');return;}download('sahroud-profile.csv','\ufeff'+csv([['Distance_m','Elevation_m','Latitude','Longitude'],...lastProfile.rows.map(r=>[r.distance,r.elevation,r.lat,r.lon])]),'text/csv;charset=utf-8');}
 function exportTin3d(){
  if(!lastTopoModel){alert('ابتدا مدل TIN را بسازید.');return;}
  const m=lastTopoModel,faces=[],zones=new Set(),localToGeo=p=>({lat:m.lat0+p.y/110540,lon:m.lon0+p.x/(111320*m.cos)});
@@ -284,8 +284,8 @@ function exportTin3d(){
  if(zones.size!==1){alert('مدل در چند زون UTM قرار دارد؛ DXF سه‌بعدی در یک فایل واحد تولید نشد.');return;}
  if(!faces.length){alert('هیچ وجه مثلثی کاملاً داخل مرز انتخابی یافت نشد.');return;}
  let d=['0','SECTION','2','HEADER','9','$INSUNITS','70','6','0','ENDSEC','0','SECTION','2','ENTITIES'];
- for(const v of faces){d.push('0','3DFACE','8','TIN_3D');for(let i=0;i<4;i++){const p=v[Math.min(i,2)],n=10+i*10;d.push(String(n),String(p.x),String(n+10),String(p.y),String(n+20),String(p.z));}}
- d.push('0','ENDSEC','0','EOF');download('sahroud-tin-3d.dxf',d.join('\\r\\n'),'application/dxf');$('topoMessage').textContent+=' | مدل سه‌بعدی DXF: '+faces.length+' وجه مثلثی.';
+ for(const v of faces){d.push('0','3DFACE','8','TIN_3D');for(let i=0;i<4;i++){const p=v[Math.min(i,2)];d.push(String(10+i),String(p.x),String(20+i),String(p.y),String(30+i),String(p.z));}}
+ d.push('0','ENDSEC','0','EOF');download('sahroud-tin-3d.dxf',d.join('\r\n'),'application/dxf');$('topoMessage').textContent+=' | مدل سه‌بعدی DXF: '+faces.length+' وجه مثلثی.';
 }
 function exportTopoDxf(){
  if(!lastTopoModel){alert('ابتدا مدل TIN و منحنی میزان را بسازید.');return;}
