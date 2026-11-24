@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102f43">
-<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS">
+<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.1.0">
 <link rel="manifest" href="./manifest.json">
 <title>SAHROUD RTK | برداشت هوشمند</title>
 <style>
+.capture-box{background:linear-gradient(135deg,#eef7fa,#f4faf7);border:1px solid #cfe1e7;border-radius:13px;padding:12px;margin-top:10px}.capture-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.capture-head strong{color:var(--navy)}.capture-box .pill{background:#e0edf1;color:var(--navy);border-color:#c7dbe2}.release-overlay{display:none;position:fixed;inset:0;z-index:10000;background:#0b2536b8;align-items:center;justify-content:center;padding:18px}.release-overlay.show{display:flex}.release-card{width:min(480px,100%);background:#fff;border-radius:18px;padding:22px;box-shadow:0 20px 60px #001a2b55}.release-card h2{font-size:20px;margin:5px 0 12px}.release-card ul{padding-right:22px;line-height:2}.release-kicker{color:var(--teal);font-size:12px;font-weight:bold}.release-card p{margin-bottom:4px}.twocol>.card:first-child{border-top:3px solid var(--teal)}.twocol>.card:nth-child(2){border-top:3px solid var(--blue)}
+
 :root{--navy:#102f43;--blue:#176b87;--teal:#087e78;--bg:#eef3f6;--card:#fff;--ink:#18313e;--muted:#667d88;--line:#dce6eb;--ok:#167044;--warn:#8a5b00;--bad:#a52c2c}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif;font-size:14px;line-height:1.7}
 header{background:linear-gradient(125deg,#102f43,#176b87);color:white;padding:17px 15px 14px;position:sticky;top:0;z-index:5;box-shadow:0 3px 12px #102f4325}
@@ -29,7 +31,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 .auto-capture-toast{position:fixed;z-index:9999;left:50%;top:18%;transform:translateX(-50%);background:#126b45;color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 5px 22px #0004;font-weight:bold;text-align:center;pointer-events:none;animation:autoToast 1s ease both}@keyframes autoToast{0%{opacity:0;transform:translate(-50%,-8px)}12%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}</style>
 </head>
 <body>
-<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div class="pill" id="connectionPill">آماده‌به‌کار</div></div></header>
+<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill" id="versionPill">نسخه 2.1.0</span><div class="pill" id="connectionPill">در انتظار GPS</div></div></div></header>
 <main>
 <nav class="tabs">
 <button class="tab active" data-tab="survey">برداشت</button><button class="tab" data-tab="points">نقاط</button><button class="tab" data-tab="selected">نقاط انتخاب‌شده</button><button class="tab" data-tab="calc">محاسبات</button><button class="tab" data-tab="settings">تنظیمات</button>
@@ -47,8 +49,10 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="stat"><small>جهت حرکت / قطب‌نما</small><strong id="heading">—</strong></div>
 </div>
 <div class="status" id="quality">برای شروع، دسترسی موقعیت مکانی را فعال کنید. گوشی را در فضای باز و دور از موانع نگه دارید.</div>
-<div class="row" style="margin-top:10px"><button id="startBtn" class="green">شروع دریافت GPS</button><button id="stopBtn" class="gray" disabled>توقف</button></div>
-<div class="row" style="margin-top:8px"><button id="saveBtn" class="dark" disabled>ثبت نقطه فعلی</button><button id="autoBtn" class="orange">ثبت خودکار: خاموش</button></div><div id="autoRunStatus" class="hint" style="margin-top:5px;padding:8px;border-radius:8px;background:#f5f8fa">ثبت خودکار خاموش است.</div><div class="row" style="margin-top:8px"><button id="mapBtn" class="gray" disabled>نمایش موقعیت روی نقشه</button></div>
+<div class="row" style="margin-top:10px"><button id="startBtn" class="green">اتصال GPS گوشی</button><button id="stopBtn" class="gray" disabled>توقف GPS</button></div>
+<div class="capture-box"><div class="capture-head"><strong>برداشت میانگین سه‌مرحله‌ای</strong><span id="tripletCount" class="pill">۰ از ۳</span></div><div class="progress"><span id="tripletBar"></span></div><div id="tripletStatus" class="hint">هر نقطه با سه برداشت مستقل ثبت می‌شود؛ میانگین مختصات در جدول می‌آید.</div>
+<div class="row" style="margin-top:9px"><button id="saveBtn" class="dark" disabled>برداشت دستی (۰/۳)</button><button id="autoBtn" class="orange">خودکار هر ۱ ثانیه: خاموش</button></div><button id="cancelTriplet" class="gray" style="width:100%;margin-top:7px">لغو برداشت نیمه‌تمام</button><div id="autoRunStatus" class="hint" style="margin-top:6px;padding:8px;border-radius:8px;background:#f5f8fa">ثبت خودکار خاموش است.</div></div>
+<div class="row" style="margin-top:8px"><button id="mapBtn" class="gray" disabled>نمایش موقعیت روی نقشه</button><button id="compassBtn" class="gray">فعال‌سازی قطب‌نما</button></div>
 </div>
 <div class="card">
 <h2>بهبود کیفیت برداشت گوشی</h2>
@@ -60,21 +64,8 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 </div>
 <div class="progress"><span id="stableBar"></span></div>
 <div class="hint" id="stableText">برای کاهش خطای تصادفی، نمونه‌های متوالی جمع‌آوری و داده‌های پرت کنترل می‌شوند. میانگین‌گیری، خطای سیستماتیک GPS را حذف نمی‌کند.</div>
-<div class="divider"></div>
-<div class="row"><button id="avgBtn" class="gray">پاک‌کردن نمونه‌ها</button><button id="compassBtn" class="gray">فعال‌سازی قطب‌نما</button></div>
-<p class="hint">حسگرهای گوشی برای جهت‌یابی و ثبت وضعیت به‌کار می‌روند؛ قطب‌نما جایگزین مختصات GNSS یا ابزار توجیه دقیق نیست.</p>
+<div class="divider"></div><div class="hint">سه برداشت مستقل، میانگین مختصات را تشکیل می‌دهد. میانگین‌گیری خطای سیستماتیک GPS و چندمسیری را حذف نمی‌کند.</div><button id="avgBtn" class="gray" style="width:100%;margin-top:8px">پاک‌کردن نمونه‌های موقت</button>
 </div>
-</div>
-<div class="card">
-<h2>اتصال گیرنده GNSS خارجی</h2>
-<div class="row"><button id="serialBtn">اتصال گیرنده سریال / بلوتوث</button><button id="serialStop" class="gray" disabled>قطع اتصال</button></div>
-<div class="stats" style="margin-top:9px">
-<div class="stat"><small>منبع مختصات</small><strong id="source">GPS گوشی</strong></div>
-<div class="stat"><small>کیفیت FIX گیرنده</small><strong id="fix">در دسترس نیست</strong></div>
-<div class="stat"><small>ماهواره‌ها (NMEA)</small><strong id="sats">—</strong></div>
-<div class="stat"><small>HDOP</small><strong id="hdop">—</strong></div>
-</div>
-<div class="hint">اتصال سریال فقط در مرورگر و گوشی سازگار و برای گیرنده‌ای که خروجی NMEA بدهد فعال می‌شود. در NMEA، مقدار HDOP فقط شاخص هندسی است و تبدیل آن به متر، برآورد تقریبی است نه دقت تضمین‌شده گیرنده. اتصال به گیرنده به‌تنهایی تضمین RTK نیست؛ برای FIX سانتی‌متری به گیرنده دوفرکانسه/RTK و تصحیحات معتبر نیاز است.</div>
 </div>
 </section>
 <section id="points" class="panel">
@@ -151,7 +142,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <label class="check"><input type="checkbox" id="sound"> صدای تأیید ثبت نقطه</label>
 <div class="row"><button id="saveSettings" class="green">ذخیره تنظیمات</button><button id="clearSamples" class="gray">پاک‌سازی نمونه‌های موقت</button></div>
 </div>
-<div class="card">
+<div class="card"><h2>اتصال گیرنده GNSS خارجی</h2><div class="row"><button id="serialBtn">اتصال گیرنده سریال / بلوتوث</button><button id="serialStop" class="gray" disabled>قطع اتصال</button></div><div class="stats" style="margin-top:9px"><div class="stat"><small>منبع مختصات</small><strong id="source">GPS گوشی</strong></div><div class="stat"><small>کیفیت FIX گیرنده</small><strong id="fix">در دسترس نیست</strong></div><div class="stat"><small>ماهواره‌ها (NMEA)</small><strong id="sats">—</strong></div><div class="stat"><small>HDOP</small><strong id="hdop">—</strong></div></div><div class="hint">اتصال سریال فقط در مرورگر و گوشی سازگار و برای گیرنده‌ای که خروجی NMEA بدهد فعال می‌شود. HDOP شاخص هندسی است، نه دقت قطعی. اتصال به گیرنده به‌تنهایی تضمین RTK نیست.</div></div><div class="card">
 <h2>محدودیت‌های فنی و وضعیت دقت</h2>
 <ul class="hint" style="padding-right:18px">
 <li>GPS داخلی گوشی معمولاً برای برداشت عمومی مناسب است، نه تضمین دقت سانتی‌متری.</li>
@@ -165,13 +156,15 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="footer">SAHROUD • ابزار برداشت و کنترل کیفیت • داده‌ها روی دستگاه شما ذخیره می‌شوند</div>
 </main>
 <div id="topoPrintSheet"></div>
+<div id="releaseOverlay" class="release-overlay" aria-modal="true" role="dialog" aria-labelledby="releaseTitle"><div class="release-card"><div class="release-kicker">SAHROUD RTK • به‌روزرسانی</div><h2 id="releaseTitle">نسخه 2.1.0</h2><p>در این نسخه:</p><ul><li>برداشت هر نقطه با سه اندازه‌گیری مستقل</li><li>میانگین عرض، طول و ارتفاع در یک ردیف جدول</li><li>اتصال خودکار GPS هنگام بازشدن برنامه</li><li>نمایش شماره نسخه و تغییرات در اولین اجرا</li><li>ساده‌سازی صفحه برداشت و انتقال تنظیمات گیرنده به بخش تنظیمات</li></ul><button id="closeRelease" class="green" style="width:100%">متوجه شدم و ادامه می‌دهم</button></div></div>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), num=(v,d=2)=>Number.isFinite(v)?v.toFixed(d):'—';
 const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,orientation=null;
-let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null;
+let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
+const APP_VERSION='2.1.0',RELEASE_KEY='sahroud_rtk_seen_version';
 const defaultSettings={maxAcc:10,avgSeconds:10,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',vibrate:true,sound:false};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{})};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
@@ -188,28 +181,49 @@ let max=Number(db.settings.avgSeconds||10)*1000,elapsed=auto&&stableSince?Math.m
 if(p){let fresh=(Date.now()-p.time)/1000,limit=Number(db.settings.maxAcc||10);let kind=p.accuracy<=limit&&fresh<=Number(db.settings.maxAge||5)?'good':'bad';status('منبع: '+(p.source||'GPS گوشی')+' | سن داده: '+num(fresh,1)+' ثانیه | '+(kind==='good'?'شرایط ثبت در محدوده تنظیم‌شده است.':'دقت یا تازگی داده برای ثبت مطمئن کافی نیست.'),kind);}
 $('connectionPill').textContent=watch!==null?'GPS فعال':serialPort?'گیرنده متصل':'آماده‌به‌کار';$('source').textContent=serialFix?'گیرنده GNSS': 'GPS گوشی';$('fix').textContent=serialFix?serialFix.fix:'در دسترس نیست';$('sats').textContent=serialFix?.sats??'—';$('hdop').textContent=serialFix?.hdop??'—';
 }
-function addSample(p){if(!Number.isFinite(p.lat)||!Number.isFinite(p.lon))return;let now=Date.now();let x={lat:p.lat,lon:p.lon,alt:Number.isFinite(p.alt)?p.alt:null,accuracy:Number.isFinite(p.accuracy)?p.accuracy:99,speed:Number.isFinite(p.speed)?p.speed:null,heading:Number.isFinite(p.heading)?p.heading:null,time:p.time||now,source:p.source||'GPS گوشی'};if(x.accuracy>200)return;if(samples.length&&now-samples[samples.length-1].time>120000)samples=[];samples.push(x);if(samples.length>240)samples.shift();latest=x;db.raw.push(x);if(db.raw.length>20000)db.raw.splice(0,db.raw.length-20000);persist();render();if(auto)maybeAuto();}
+function addSample(p){if(!Number.isFinite(p.lat)||!Number.isFinite(p.lon))return;let now=Date.now();let x={lat:p.lat,lon:p.lon,alt:Number.isFinite(p.alt)?p.alt:null,accuracy:Number.isFinite(p.accuracy)?p.accuracy:99,speed:Number.isFinite(p.speed)?p.speed:null,heading:Number.isFinite(p.heading)?p.heading:null,time:p.time||now,source:p.source||'GPS گوشی'};if(x.accuracy>200)return;if(samples.length&&now-samples[samples.length-1].time>120000)samples=[];samples.push(x);if(samples.length>240)samples.shift();latest=x;db.raw.push(x);if(db.raw.length>20000)db.raw.splice(0,db.raw.length-20000);persist();render();if(auto)autoCaptureTick();}
 function startGps(){if(!navigator.geolocation){status('مرورگر این دستگاه موقعیت مکانی را پشتیبانی نمی‌کند.','bad');return;}if(!window.isSecureContext){status('برای دسترسی GPS باید برنامه از HTTPS باز شود.','bad');return;}if(watch!==null)return;status('در حال دریافت موقعیت؛ برای نتیجه بهتر به فضای باز بروید.');watch=navigator.geolocation.watchPosition(pos=>{let c=pos.coords;addSample({lat:c.latitude,lon:c.longitude,alt:c.altitude,accuracy:c.accuracy,speed:c.speed,heading:c.heading,time:pos.timestamp,source:'GPS گوشی'});},err=>{status('خطای GPS: '+({1:'اجازه دسترسی داده نشده است.',2:'موقعیت قابل تشخیص نیست.',3:'زمان دریافت موقعیت تمام شد.'}[err.code]||err.message),'bad');}, {enableHighAccuracy:true,maximumAge:0,timeout:30000});$('startBtn').disabled=true;$('stopBtn').disabled=false;}
 function stopGps(){if(watch!==null)navigator.geolocation.clearWatch(watch);watch=null;$('startBtn').disabled=false;$('stopBtn').disabled=true;render();}
 function accuracyAlarm(a){let now=Date.now();status('خطای دقت: دقت اعلامی ±'+num(a.accuracy,1)+' متر است و از حد مجاز '+num(Number(db.settings.maxAcc),0)+' متر بیشتر است. ثبت فقط با تأیید شما انجام می‌شود.','bad');if(now-lastAccuracyAlarm>10000){beep();if(navigator.vibrate)navigator.vibrate([180,100,180]);lastAccuracyAlarm=now;}}
-function maybeAuto(){
- const now=Date.now(),duration=Math.max(1,Number(db.settings.avgSeconds)||10)*1000;
- const recent=samples.filter(x=>now-x.time<=duration+2000);
- if(recent.length<4){stableSince=0;return;}
- const a=avgPosition(recent);if(!a){stableSince=0;return;}
- const age=(now-a.time)/1000;
- if(age>Number(db.settings.maxAge)){stableSince=0;return;}
- if(a.accuracy>Number(db.settings.maxAcc)){stableSince=0;accuracyAlarm(a);return;}
- const spreadLimit=Math.max(5,a.accuracy*1.5);
- if(a.spread>spreadLimit){stableSince=0;return;}
- const first=recent[0].time,last=recent[recent.length-1].time;
- if(last-first<duration){stableSince=first;return;}
- if(now-lastAutoSave<Number(db.settings.autoInterval||5)*1000)return;
- const lastSaved=[...db.points].reverse().find(p=>p.captureMode==='AUTO');
- if(lastSaved&&distance(lastSaved,a)<Number(db.settings.autoDistance||2))return;
- if(savePoint(true,false,a)){lastAutoSave=now;stableSince=now;}
+function meanTriplet(items){
+ if(items.length!==3)return null;
+ const avg=k=>items.reduce((sum,x)=>sum+Number(x[k]),0)/3;
+ const lat=avg('lat'),lon=avg('lon'),alts=items.map(x=>x.alt).filter(Number.isFinite);
+ const spread=Math.sqrt(items.reduce((sum,x)=>sum+distance({lat,lon},x)**2,0)/3);
+ return {lat,lon,alt:alts.length?alts.reduce((a,b)=>a+b,0)/alts.length:null,accuracy:avg('accuracy'),spread,count:3,time:Math.max(...items.map(x=>x.time)),source:items[2].source||items[0].source||'GPS گوشی',sampleTimes:items.map(x=>x.time),sampleCoordinates:items.map(x=>({lat:x.lat,lon:x.lon,alt:x.alt,accuracy:x.accuracy,time:x.time}))};
 }
-function savePoint(isAuto=false,confirmedLowAccuracy=false,positionOverride=null){let a=positionOverride||avgPosition(samples);if(!a){status('هنوز داده کافی برای ثبت وجود ندارد.','bad');return false;}let age=(Date.now()-a.time)/1000;if(age>Number(db.settings.maxAge)){status('خطای تازگی داده: موقعیت دریافتی قدیمی است؛ پس از دریافت داده تازه دوباره ثبت کنید.','bad');beep();return false;}let limit=Number(db.settings.maxAcc);if(a.accuracy>limit){accuracyAlarm(a);if(isAuto)return false;if(!confirmedLowAccuracy){let ok=confirm('خطای دقت\n\nدقت اعلامی موقعیت ±'+num(a.accuracy,1)+' متر است؛ حد مجاز شما '+num(limit,0)+' متر است.\n\nاین نقطه با دقت پایین‌تر از حد انتخابی ثبت شود؟');if(!ok)return;return savePoint(false,true);}}if(isAuto){let last=[...db.points].reverse().find(p=>p.captureMode==='AUTO');if(last&&distance(last,a)<Number(db.settings.autoDistance||2))return false;}let name,note;if(isAuto){name='AUTO-'+String(db.points.length+1).padStart(3,'0');note='ثبت خودکار پس از پایدارشدن موقعیت';}else{name=prompt('نام نقطه را وارد کنید:', 'P'+String(db.points.length+1).padStart(3,'0'));if(name===null)return;note=prompt('توضیحات (اختیاری):','')||'';}let p={id:Date.now()+'-'+Math.random().toString(36).slice(2,7),name:name.trim()||'P'+(db.points.length+1),note,lat:a.lat,lon:a.lon,alt:a.alt,accuracy:a.accuracy,spread:a.spread,samples:a.count,source:a.source,fix:serialFix?.fix||'PHONE',time:new Date().toISOString(),quality:confirmedLowAccuracy?'خطای دقت - ثبت با تأیید کاربر':a.accuracy<=3?'مناسب نسبی':'محدودیت GPS گوشی',accuracyAccepted:confirmedLowAccuracy,captureMode:isAuto?'AUTO':'MANUAL'};db.points.push(p);persist();renderPoints();renderSelects();if(db.settings.vibrate&&navigator.vibrate)navigator.vibrate(80);if(isAuto)autoCaptureFeedback(p);else if(db.settings.sound)beep();status((isAuto?'ثبت خودکار انجام شد: ':'نقطه ثبت شد: ')+p.name+' | دقت اعلامی ±'+num(p.accuracy,1)+' متر'+(confirmedLowAccuracy?' | هشدار خطای دقت تأیید شد.':''),'good');return true;}
+function updateTripletUI(){
+ const count=auto?autoBatch.length:manualBatch.length;
+ $('tripletCount').textContent=count+' از ۳';$('tripletBar').style.width=(count/3*100)+'%';
+ $('saveBtn').textContent='برداشت دستی ('+count+'/۳)';
+ $('tripletStatus').textContent=auto?'برداشت خودکار: '+count+' از ۳ نمونه؛ دریافت نمونه تازه هر یک ثانیه.':count?'برداشت دستی '+count+' از ۳؛ برای نمونه بعدی دوباره لمس کنید.':'هر نقطه با سه برداشت مستقل ثبت می‌شود؛ میانگین مختصات در جدول می‌آید.';
+}
+function freshReading(lastTime=0){if(!latest)return null;const age=(Date.now()-latest.time)/1000;if(age>Number(db.settings.maxAge||5)||latest.time<=lastTime)return null;return {...latest};}
+function finishTriplet(items,isAuto){
+ const mean=meanTriplet(items);if(!mean)return false;
+ if(mean.accuracy>Number(db.settings.maxAcc)){accuracyAlarm(mean);status('میانگین سه برداشت از حد دقت مجاز ضعیف‌تر است؛ این سه نمونه ثبت نشد.','bad');return false;}
+ if(isAuto){const last=[...db.points].reverse().find(p=>p.captureMode==='AUTO');if(last&&distance(last,mean)<Number(db.settings.autoDistance||2)){status('سه برداشت انجام شد، اما فاصله از نقطه خودکار قبلی کمتر از حد تنظیم‌شده است.','');return false;}}
+ return savePoint(isAuto,false,mean);
+}
+function manualCapture(){
+ if(auto){status('برای برداشت دستی، ابتدا ثبت خودکار را خاموش کنید.','bad');return;}
+ const x=freshReading(lastManualSampleTime);if(!x){status('برای برداشت مستقل بعدی، منتظر دریافت موقعیت GPS تازه بمانید.','bad');return;}
+ lastManualSampleTime=x.time;manualBatch.push(x);updateTripletUI();
+ if(manualBatch.length===3){const batch=manualBatch.slice();manualBatch=[];const ok=finishTriplet(batch,false);updateTripletUI();if(ok)status('میانگین سه برداشت دستی در یک ردیف ثبت شد.','good');}
+}
+function autoCaptureTick(){
+ if(!auto||tripletBusy)return;
+ const now=Date.now();if(!watch&&!serialPort){$('autoRunStatus').textContent='ثبت خودکار روشن است؛ در انتظار اتصال GPS یا گیرنده.';return;}
+ if(autoBatch.length===0&&now-lastAutoSave<Number(db.settings.autoInterval||5)*1000)return;
+ const x=freshReading(lastAutoSampleTime);if(!x){$('autoRunStatus').textContent='ثبت خودکار در حال اجراست؛ در انتظار نمونه تازه GPS.';return;}
+ lastAutoSampleTime=x.time;autoBatch.push(x);updateTripletUI();$('autoRunStatus').textContent='ثبت خودکار در حال اجراست؛ برداشت '+autoBatch.length+' از ۳ (هر یک ثانیه).';
+ if(autoBatch.length===3){const batch=autoBatch.slice();autoBatch=[];tripletBusy=true;const ok=finishTriplet(batch,true);if(ok)lastAutoSave=Date.now();tripletBusy=false;updateTripletUI();}
+}
+function cancelTriplet(){manualBatch=[];autoBatch=[];updateTripletUI();status('برداشت نیمه‌تمام لغو شد.');}
+function showReleaseNotes(){$('versionPill').textContent='نسخه '+APP_VERSION;if(localStorage.getItem(RELEASE_KEY)!==APP_VERSION)$('releaseOverlay').classList.add('show');$('closeRelease').onclick=()=>{localStorage.setItem(RELEASE_KEY,APP_VERSION);$('releaseOverlay').classList.remove('show');};}
+function maybeAuto(){autoCaptureTick();}
+
+function savePoint(isAuto=false,confirmedLowAccuracy=false,positionOverride=null){let a=positionOverride||avgPosition(samples);if(!a){status('هنوز داده کافی برای ثبت وجود ندارد.','bad');return false;}let age=(Date.now()-a.time)/1000;if(age>Number(db.settings.maxAge)){status('خطای تازگی داده: موقعیت دریافتی قدیمی است؛ پس از دریافت داده تازه دوباره ثبت کنید.','bad');beep();return false;}let limit=Number(db.settings.maxAcc);if(a.accuracy>limit){accuracyAlarm(a);if(isAuto)return false;if(!confirmedLowAccuracy){let ok=confirm('خطای دقت\n\nدقت اعلامی موقعیت ±'+num(a.accuracy,1)+' متر است؛ حد مجاز شما '+num(limit,0)+' متر است.\n\nاین نقطه با دقت پایین‌تر از حد انتخابی ثبت شود؟');if(!ok)return;return savePoint(false,true);}}if(isAuto){let last=[...db.points].reverse().find(p=>p.captureMode==='AUTO');if(last&&distance(last,a)<Number(db.settings.autoDistance||2))return false;}let name,note;if(isAuto){name='AUTO-'+String(db.points.length+1).padStart(3,'0');note='میانگین سه برداشت خودکار با فاصله یک‌ثانیه';}else{name=prompt('نام نقطه را وارد کنید:', 'P'+String(db.points.length+1).padStart(3,'0'));if(name===null)return;note=prompt('توضیحات (اختیاری):','')||'';}let p={id:Date.now()+'-'+Math.random().toString(36).slice(2,7),name:name.trim()||'P'+(db.points.length+1),note,lat:a.lat,lon:a.lon,alt:a.alt,accuracy:a.accuracy,spread:a.spread,samples:a.count,sampleCoordinates:a.sampleCoordinates||[],sampleTimes:a.sampleTimes||[],source:a.source,fix:serialFix?.fix||'PHONE',time:new Date().toISOString(),quality:confirmedLowAccuracy?'خطای دقت - ثبت با تأیید کاربر':a.accuracy<=3?'مناسب نسبی':'محدودیت GPS گوشی',accuracyAccepted:confirmedLowAccuracy,captureMode:isAuto?'AUTO':'MANUAL'};db.points.push(p);persist();renderPoints();renderSelects();if(db.settings.vibrate&&navigator.vibrate)navigator.vibrate(80);if(isAuto)autoCaptureFeedback(p);else if(db.settings.sound)beep();status((isAuto?'ثبت خودکار انجام شد: ':'نقطه ثبت شد: ')+p.name+' | دقت اعلامی ±'+num(p.accuracy,1)+' متر'+(confirmedLowAccuracy?' | هشدار خطای دقت تأیید شد.':''),'good');return true;}
 function unlockAudio(){try{let C=window.AudioContext||window.webkitAudioContext;if(!C)return;audioContext=audioContext||new C();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});}catch(e){}}
 function beep(duration=.12){try{let C=window.AudioContext||window.webkitAudioContext;if(!C)return;let c=audioContext||(audioContext=new C());if(c.state==='suspended')c.resume().catch(()=>{});let o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.08;o.start();o.stop(c.currentTime+duration);}catch(e){}}
 function autoCaptureFeedback(point){let old=document.getElementById('autoCaptureToast');if(old)old.remove();let el=document.createElement('div');el.id='autoCaptureToast';el.className='auto-capture-toast';el.textContent='✓ ثبت خودکار انجام شد: '+point.name;document.body.appendChild(el);setTimeout(()=>{if(el.isConnected)el.remove();},1000);beep(1);if(navigator.vibrate)navigator.vibrate([100,60,100]);}
@@ -391,7 +405,7 @@ function exportSelectedCsv(){const pts=(db.selectedPointIds||[]).map(id=>db.poin
 function exportSelectedGeo(){const pts=(db.selectedPointIds||[]).map(id=>db.points.find(p=>p.id===id)).filter(Boolean);if(!pts.length){alert('ابتدا نقاط موردنظر را انتخاب کنید.');return;}download('sahroud-selected-points.geojson',JSON.stringify({type:'FeatureCollection',features:pts.map(p=>({type:'Feature',properties:{name:p.name,accuracy:p.accuracy,time:p.time},geometry:{type:'Point',coordinates:[p.lon,p.lat,p.alt]}}))},null,2),'application/geo+json');}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===b.dataset.tab));if(b.dataset.tab==='calc')targetUpdate();if(b.dataset.tab==='points')drawPlot();if(b.dataset.tab==='selected')drawSelectedPlot();}));
 window.addEventListener('resize',()=>{if(document.querySelector('[data-tab="points"].active'))drawPlot();});
-$('startBtn').onclick=startGps;$('stopBtn').onclick=stopGps;$('saveBtn').onclick=()=>savePoint(false);$('mapBtn').onclick=()=>{if(!latest)return;let u='https://www.openstreetmap.org/?mlat='+latest.lat+'&mlon='+latest.lon+'#map=18/'+latest.lat+'/'+latest.lon;window.open(u,'_blank','noopener');};$('autoBtn').onclick=()=>{unlockAudio();auto=!auto;stableSince=0;lastAutoSave=0;$('autoBtn').textContent='ثبت خودکار: '+(auto?'روشن':'خاموش');$('autoBtn').className=auto?'green':'orange';render();};$('avgBtn').onclick=()=>{samples=[];stableSince=0;render();};$('clearSamples').onclick=()=>{samples=[];stableSince=0;render();status('نمونه‌های موقت پاک شدند.');};
+$('startBtn').onclick=startGps;$('stopBtn').onclick=stopGps;$('saveBtn').onclick=manualCapture;$('cancelTriplet').onclick=cancelTriplet;$('mapBtn').onclick=()=>{if(!latest)return;let u='https://www.openstreetmap.org/?mlat='+latest.lat+'&mlon='+latest.lon+'#map=18/'+latest.lat+'/'+latest.lon;window.open(u,'_blank','noopener');};$('autoBtn').onclick=()=>{unlockAudio();auto=!auto;manualBatch=[];autoBatch=[];lastAutoSampleTime=0;lastManualSampleTime=0;stableSince=0;lastAutoSave=auto?0:Date.now();$('autoBtn').textContent='خودکار هر ۱ ثانیه: '+(auto?'روشن':'خاموش');$('autoBtn').className=auto?'green':'orange';updateTripletUI();render();};$('avgBtn').onclick=()=>{samples=[];stableSince=0;render();};$('clearSamples').onclick=()=>{samples=[];stableSince=0;render();status('نمونه‌های موقت پاک شدند.');};
 $('compassBtn').onclick=async()=>{try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){let p=await DeviceOrientationEvent.requestPermission();if(p!=='granted')throw Error('مجوز قطب‌نما داده نشد');}window.addEventListener('deviceorientationabsolute',onOrientation,true);window.addEventListener('deviceorientation',onOrientation,true);compassEnabled=true;status('حسگر جهت‌یابی فعال شد.','good');}catch(e){status('قطب‌نما در این دستگاه در دسترس نیست یا مجوز داده نشد.','bad');}};
 function onOrientation(e){let h=Number.isFinite(e.webkitCompassHeading)?e.webkitCompassHeading:Number.isFinite(e.alpha)?(360-e.alpha)%360:NaN;if(Number.isFinite(h))orientation=h;render();}
 $('serialBtn').onclick=connectSerial;$('serialStop').onclick=disconnectSerial;$('buildTopo').onclick=makeTopo;$('exportTopoDxf').onclick=exportTopoDxf;$('exportTin3d').onclick=exportTin3d;$('buildProfile').onclick=buildProfile;$('exportProfileCsv').onclick=exportProfileCsv;$('contourInterval').onchange=()=>{if($('topoCount').textContent!=='—')makeTopo();};
@@ -415,9 +429,10 @@ $('exportCsv').onclick=exportCsv;$('exportGeo').onclick=exportGeo;$('exportKml')
 $('clearPoints').onclick=()=>{if(confirm('تمام نقاط این پروژه حذف شوند؟')){db.points=[];db.selectedPointIds=[];persist();renderPoints();renderSelects();}};
 $('saveSettings').onclick=()=>saveSettings(true);
 ['maxAcc','avgSeconds','autoDistance','autoInterval','maxAge','coordFormat','vibrate','sound'].forEach(id=>$(id).addEventListener('change',()=>saveSettings(false)));
-load();applySettings();$('projectName').value=db.project?.name||'پروژه جدید';renderPoints();renderSelects();render();
-setInterval(()=>{if(latest)render();if(auto&&(watch!==null||serialPort))maybeAuto();targetUpdate();},1000);
-if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+load();applySettings();$('projectName').value=db.project?.name||'پروژه جدید';renderPoints();renderSelects();render();updateTripletUI();showReleaseNotes();
+setInterval(()=>{if(latest)render();if(auto)autoCaptureTick();targetUpdate();},1000);
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(reg=>reg.update()).catch(()=>{}));
+setTimeout(()=>{if(watch===null&&navigator.geolocation&&window.isSecureContext)startGps();},700);
 })();
 </script>
 </body></html>
