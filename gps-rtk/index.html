@@ -249,7 +249,7 @@ function exportTrackDxf(){
  const t=trackForExport();if(!t)return;
  const projected=t.points.map((p,i)=>({p,i,u:toUtm(p.lat,p.lon)})),zones=[...new Set(projected.map(x=>x.u.zone))],hems=[...new Set(projected.map(x=>x.u.hem))];
  if(zones.length!==1||hems.length!==1){alert('مسیر از بیش از یک زون یا نیم‌کره UTM عبور می‌کند؛ برای جلوگیری از خطای مختصات، DXF ساخته نشد.');return;}
- const clean=v=>String(v??'').replace(/[\\r\\n\\t]/g,' ').replace(/\s+/g,' ').slice(0,180);
+ const clean=v=>String(v??'').replace(/[\r\n\t]/g,' ').replace(/\s+/g,' ').slice(0,180);
  const d=['0','SECTION','2','HEADER','9','$ACADVER','1','AC1009','9','$INSUNITS','70','6','0','ENDSEC',
  '0','SECTION','2','TABLES','0','TABLE','2','LAYER','70','4'];
  [['TRACK',7],['TRACK_POINTS',5],['TRACK_MARKS',1],['TRACK_LABELS',3]].forEach(([name,color])=>d.push('0','LAYER','2',name,'70','0','62',String(color),'6','CONTINUOUS'));
@@ -268,13 +268,13 @@ function exportTrackDxf(){
 }
 function exportTrackReport(){
  const t=trackForExport();if(!t)return;
- const pts=t.points,acc=pts.map(p=>Number(p.accuracy)).filter(Number.isFinite),fixCounts={};
- pts.forEach(p=>{const k=String(p.fix||'نامشخص');fixCounts[k]=(fixCounts[k]||0)+1;});
+ const pts=t.points,acc=pts.map(p=>Number(p.accuracy)).filter(Number.isFinite),fixCounts={},sourceCounts={};
+ pts.forEach(p=>{const k=String(p.fix||'نامشخص'),s=String(p.source||'نامشخص');fixCounts[k]=(fixCounts[k]||0)+1;sourceCounts[s]=(sourceCounts[s]||0)+1;});
  const start=t.start?new Date(t.start):new Date(pts[0].time),end=t.end?new Date(t.end):new Date(pts[pts.length-1].time);
  const duration=Math.max(0,(end-start)/1000),fmt=d=>Number.isFinite(d.getTime())?d.toLocaleString('fa-IR'):'نامشخص';
  const sorted=[...acc].sort((a,b)=>a-b),mean=acc.length?acc.reduce((a,b)=>a+b,0)/acc.length:null;
  const lines=['گزارش برداشت مسیر SAHROUD RTK','نام پروژه: '+(db.project?.name||'—'),'نام مسیر: '+t.name,'شناسه مسیر: '+t.id,'وضعیت: '+(t.status==='completed'?'پایان‌یافته':t.status==='paused'?'مکث':'در حال برداشت'),'سیستم مختصات خروجی DXF: WGS84 / UTM zone '+[...new Set(pts.map(p=>toUtm(p.lat,p.lon).zone))].join(', '),'زمان شروع: '+fmt(start),'زمان پایان/آخرین نقطه: '+fmt(end),'مدت: '+Math.floor(duration/3600)+' ساعت و '+Math.floor(duration%3600/60)+' دقیقه و '+Math.floor(duration%60)+' ثانیه','تعداد کل نقاط: '+pts.length,'نقاط مهم: '+pts.filter(p=>p.manual).length,'طول مسیر: '+trackLength(t).toFixed(3)+' متر','تعداد نقاط دارای دقت ثبت‌شده: '+acc.length,'کمترین دقت اعلامی: '+(acc.length?Math.min(...acc).toFixed(2)+' m':'ناموجود'),'بیشترین دقت اعلامی: '+(acc.length?Math.max(...acc).toFixed(2)+' m':'ناموجود'),'میانگین دقت اعلامی: '+(mean!==null?mean.toFixed(2)+' m':'ناموجود'),'میانه دقت اعلامی: '+(sorted.length?sorted[Math.floor((sorted.length-1)/2)].toFixed(2)+' m':'ناموجود'),'توزیع Fix / منبع کیفیت:'];
- Object.entries(fixCounts).forEach(([k,v])=>lines.push(' - '+k+': '+v));
+ Object.entries(fixCounts).forEach(([k,v])=>lines.push(' - '+k+': '+v));\n lines.push('توزیع منبع موقعیت:');Object.entries(sourceCounts).forEach(([k,v])=>lines.push(' - '+k+': '+v));
  lines.push('','توضیح: دقت‌های درج‌شده همان مقادیر گزارش‌شده توسط گیرنده/گوشی هستند و تضمین دقت نقشه‌برداری نیستند. برای برداشت‌های حساس، کنترل مبنا و صحت‌سنجی میدانی لازم است.');
  const report=lines.join('\\r\\n');
  download('sahroud-track-report.txt','\\ufeff'+report,'text/plain;charset=utf-8');
