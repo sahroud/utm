@@ -264,7 +264,7 @@ function exportTrackDxf(){
   d.push('0','TEXT','8','TRACK_LABELS','10',u.E.toFixed(3),'20',(u.N+1.2).toFixed(3),'30',(Number.isFinite(p.alt)?Number(p.alt):0).toFixed(3),'40','1.5','1',clean(p.manual?(p.name||'MARK-'+(i+1)):'P'+(i+1)));
  });
  d.push('0','ENDSEC','0','EOF');
- download('sahroud-track-UTM'+zones[0]+'.dxf',d.join('\\r\\n'),'application/dxf');
+ download('sahroud-track-UTM'+zones[0]+'.dxf',d.join('\r\n'),'application/dxf');
 }
 function exportTrackReport(){
  const t=trackForExport();if(!t)return;
@@ -276,8 +276,8 @@ function exportTrackReport(){
  const lines=['گزارش برداشت مسیر SAHROUD RTK','نام پروژه: '+(db.project?.name||'—'),'نام مسیر: '+t.name,'شناسه مسیر: '+t.id,'وضعیت: '+(t.status==='completed'?'پایان‌یافته':t.status==='paused'?'مکث':'در حال برداشت'),'سیستم مختصات خروجی DXF: WGS84 / UTM zone '+[...new Set(pts.map(p=>toUtm(p.lat,p.lon).zone))].join(', '),'زمان شروع: '+fmt(start),'زمان پایان/آخرین نقطه: '+fmt(end),'مدت: '+Math.floor(duration/3600)+' ساعت و '+Math.floor(duration%3600/60)+' دقیقه و '+Math.floor(duration%60)+' ثانیه','تعداد کل نقاط: '+pts.length,'نقاط مهم: '+pts.filter(p=>p.manual).length,'طول مسیر: '+trackLength(t).toFixed(3)+' متر','تعداد نقاط دارای دقت ثبت‌شده: '+acc.length,'کمترین دقت اعلامی: '+(acc.length?Math.min(...acc).toFixed(2)+' m':'ناموجود'),'بیشترین دقت اعلامی: '+(acc.length?Math.max(...acc).toFixed(2)+' m':'ناموجود'),'میانگین دقت اعلامی: '+(mean!==null?mean.toFixed(2)+' m':'ناموجود'),'میانه دقت اعلامی: '+(sorted.length?sorted[Math.floor((sorted.length-1)/2)].toFixed(2)+' m':'ناموجود'),'توزیع Fix / منبع کیفیت:'];
  Object.entries(fixCounts).forEach(([k,v])=>lines.push(' - '+k+': '+v));\n lines.push('توزیع منبع موقعیت:');Object.entries(sourceCounts).forEach(([k,v])=>lines.push(' - '+k+': '+v));
  lines.push('','توضیح: دقت‌های درج‌شده همان مقادیر گزارش‌شده توسط گیرنده/گوشی هستند و تضمین دقت نقشه‌برداری نیستند. برای برداشت‌های حساس، کنترل مبنا و صحت‌سنجی میدانی لازم است.');
- const report=lines.join('\\r\\n');
- download('sahroud-track-report.txt','\\ufeff'+report,'text/plain;charset=utf-8');
+ const report=lines.join('\r\n');
+ download('sahroud-track-report.txt','\ufeff'+report,'text/plain;charset=utf-8');
  alert('گزارش مسیر آماده شد. طول: '+trackLength(t).toFixed(2)+' متر | نقاط: '+pts.length+' | نقاط مهم: '+pts.filter(p=>p.manual).length);
 }
 
