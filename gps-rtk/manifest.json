@@ -1,0 +1,12 @@
+{
+  "name": "SAHROUD RTK - برداشت هوشمند",
+  "short_name": "SAHROUD RTK",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3f6",
+  "theme_color": "#102f43",
+  "description": "سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی"
+}
