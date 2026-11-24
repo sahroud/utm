@@ -81,7 +81,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="card"><h2>جدول نقاط برداشت</h2>
 <div class="row" style="margin-bottom:8px"><button id="selectAllPoints" class="gray">انتخاب همه</button><button id="clearPointSelection" class="gray">لغو انتخاب‌ها</button><button id="addSelectedPoints" class="green">افزودن انتخاب‌ها به نقاط انتخاب‌شده</button></div>
 <div class="hint" id="pointsTableInfo">برای انتخاب نقاط، تیک ابتدای هر ردیف را بزنید.</div>
-<div style="overflow:auto"><table><thead><tr><th>انتخاب</th><th>ردیف</th><th>نام</th><th>عرض</th><th>طول</th><th>ارتفاع</th><th>دقت (متر)</th><th>زمان</th><th>عملیات</th></tr></thead><tbody id="pointsTableBody"><tr><td colspan="9">هنوز نقطه‌ای ثبت نشده است.</td></tr></tbody></table></div></div>
+<div style="overflow:auto"><table><thead><tr><th>انتخاب</th><th>ردیف</th><th>نام</th><th>عرض</th><th>طول</th><th>ارتفاع</th><th>دقت (متر)</th><th>تعداد برداشت</th><th>زمان</th><th>عملیات</th></tr></thead><tbody id="pointsTableBody"><tr><td colspan="10">هنوز نقطه‌ای ثبت نشده است.</td></tr></tbody></table></div></div>
 <div class="card"><h2>ترسیم محدوده برداشت</h2><canvas id="surveyPlot" height="360" style="width:100%;height:360px;display:block;background:#f8fbfc;border:1px solid var(--line);border-radius:10px"></canvas><div class="hint">نقاط به ترتیب فهرست ترسیم می‌شوند. برای تغییر شکل محدوده از دکمه‌های بالا/پایین هر نقطه استفاده کنید. این ترسیم، نقشه شماتیک محلی است و جایگزین نقشه مبنا یا نقشه ثبتی نیست.</div>
 <div class="card"><h2>مدل ارتفاعی و منحنی میزان</h2>
 <div class="row"><div style="flex:1"><label>فاصله منحنی میزان</label><select id="contourInterval"><option value="0.5">۰٫۵ متر</option><option value="1" selected>۱ متر</option><option value="2">۲ متر</option></select></div><div style="flex:1;align-self:end"><button id="buildTopo" class="green">ساخت مدل و منحنی‌ها</button></div></div>
@@ -103,7 +103,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="card"><h2>نقاط انتخاب‌شده برای مأموریت</h2>
 <div class="row"><button id="selectedSelectAll" class="gray">انتخاب همه نقاط جدول</button><button id="removeSelectedPoints" class="red">حذف از فهرست انتخاب‌شده</button><button id="deleteSelectedPoints" class="red">حذف دائمی نقاط انتخاب‌شده</button></div>
 <div class="hint" id="selectedCount" style="margin:8px 0">هیچ نقطه‌ای انتخاب نشده است.</div>
-<div style="overflow:auto"><table><thead><tr><th>انتخاب</th><th>ردیف</th><th>نام</th><th>عرض</th><th>طول</th><th>ارتفاع</th><th>دقت</th><th>عملیات</th></tr></thead><tbody id="selectedTableBody"><tr><td colspan="8">هنوز نقطه‌ای انتخاب نشده است.</td></tr></tbody></table></div>
+<div style="overflow:auto"><table><thead><tr><th>انتخاب</th><th>ردیف</th><th>نام</th><th>عرض</th><th>طول</th><th>ارتفاع</th><th>دقت</th><th>تعداد برداشت</th><th>عملیات</th></tr></thead><tbody id="selectedTableBody"><tr><td colspan="9">هنوز نقطه‌ای انتخاب نشده است.</td></tr></tbody></table></div>
 <h3 style="margin-top:14px">نمایش مکانی نقاط انتخاب‌شده</h3>
 <canvas id="selectedPlot" height="360" style="width:100%;height:360px;display:block;background:#f8fbfc;border:1px solid var(--line);border-radius:10px"></canvas>
 <div class="row" style="margin-top:8px"><button id="exportSelectedCsv" class="dark">خروجی CSV نقاط انتخاب‌شده</button><button id="exportSelectedGeo" class="gray">خروجی GeoJSON نقاط انتخاب‌شده</button></div>
@@ -133,7 +133,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="card">
 <h2>تنظیمات برداشت</h2>
 <label>حداکثر دقت قابل قبول برای ثبت (متر)</label><select id="maxAcc"><option value="1">۱ متر</option><option value="2">۲ متر</option><option value="3">۳ متر</option><option value="5">۵ متر</option><option value="10" selected>۱۰ متر</option></select>
-<label>مدت پایداری موقعیت پیش از ثبت خودکار</label><select id="avgSeconds"><option value="5">۵ ثانیه</option><option value="10" selected>۱۰ ثانیه</option><option value="15">۱۵ ثانیه</option><option value="30">۳۰ ثانیه</option><option value="60">۶۰ ثانیه</option></select>
+<label>تعداد برداشت برای میانگین هر نقطه</label><select id="avgSeconds"><option value="3" selected>۳ برداشت مستقل</option></select>
 <label>حداقل فاصله بین نقاط ثبت خودکار</label><select id="autoDistance"><option value="1">۱ متر</option><option value="2" selected>۲ متر</option><option value="5">۵ متر</option><option value="10">۱۰ متر</option></select>
 <label>حداقل زمان بین دو ثبت خودکار</label><select id="autoInterval"><option value="2">۲ ثانیه</option><option value="5" selected>۵ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="30">۳۰ ثانیه</option></select>
 <label>فاصله نمونه‌برداری مورد قبول (حداکثر سن)</label><select id="maxAge"><option value="3">۳ ثانیه</option><option value="5" selected>۵ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="20">۲۰ ثانیه</option></select>
@@ -233,7 +233,7 @@ function renderPoints(){
  const body=$('pointsTableBody');if(!body)return;
  if(!Array.isArray(db.selectedPointIds))db.selectedPointIds=[];else db.selectedPointIds=db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id));
  if(!db.points.length){body.innerHTML='<tr><td colspan="9">هنوز نقطه‌ای ثبت نشده است.</td></tr>';$('pointsTableInfo').textContent='هیچ نقطه‌ای ثبت نشده است.';renderSelectedPoints();drawPlot();return;}
- body.innerHTML=db.points.map((p,i)=>'<tr><td><input type="checkbox" class="point-check" data-id="'+p.id+'" '+(db.selectedPointIds.includes(p.id)?'checked':'')+' aria-label="انتخاب '+esc(p.name)+'"></td><td>'+(i+1)+'</td><td>'+esc(p.name)+(p.captureMode==='AUTO'?' <small>(خودکار)</small>':'')+'</td><td class="ltr">'+p.lat.toFixed(7)+'</td><td class="ltr">'+p.lon.toFixed(7)+'</td><td>'+num(p.alt,2)+'</td><td>'+num(p.accuracy,1)+'</td><td>'+new Date(p.time).toLocaleString('fa-IR')+'</td><td><button class="gray" data-action="boundary" data-id="'+p.id+'">'+(isBoundary(p)?'مرزی':'غیرمرزی')+'</button> <button class="gray" data-action="target" data-id="'+p.id+'">هدف</button> <button class="red" data-action="delete" data-id="'+p.id+'">حذف</button></td></tr>').join('');
+ body.innerHTML=db.points.map((p,i)=>'<tr><td><input type="checkbox" class="point-check" data-id="'+p.id+'" '+(db.selectedPointIds.includes(p.id)?'checked':'')+' aria-label="انتخاب '+esc(p.name)+'"></td><td>'+(i+1)+'</td><td>'+esc(p.name)+(p.captureMode==='AUTO'?' <small>(خودکار)</small>':'')+'</td><td class="ltr">'+p.lat.toFixed(7)+'</td><td class="ltr">'+p.lon.toFixed(7)+'</td><td>'+num(p.alt,2)+'</td><td>'+num(p.accuracy,1)+'</td><td>'+Number(p.samples||1)+'</td><td>'+new Date(p.time).toLocaleString('fa-IR')+'</td><td><button class="gray" data-action="boundary" data-id="'+p.id+'">'+(isBoundary(p)?'مرزی':'غیرمرزی')+'</button> <button class="gray" data-action="target" data-id="'+p.id+'">هدف</button> <button class="red" data-action="delete" data-id="'+p.id+'">حذف</button></td></tr>').join('');
  $('pointsTableInfo').textContent='تعداد نقاط: '+db.points.length+' | انتخاب‌شده: '+db.selectedPointIds.length;
  renderSelectedPoints();drawPlot();
 }
@@ -388,7 +388,7 @@ function renderSelectedPoints(){
  const body=$('selectedTableBody');if(!body)return;const chosen=(db.selectedPointIds||[]).map(id=>db.points.find(p=>p.id===id)).filter(Boolean);
  $('selectedCount').textContent='تعداد نقاط انتخاب‌شده: '+chosen.length;
  if(!chosen.length){body.innerHTML='<tr><td colspan="8">هنوز نقطه‌ای انتخاب نشده است.</td></tr>';drawSelectedPlot();return;}
- body.innerHTML=chosen.map((p,i)=>'<tr><td><input type="checkbox" class="selected-check" data-id="'+p.id+'" checked></td><td>'+(i+1)+'</td><td>'+esc(p.name)+'</td><td class="ltr">'+p.lat.toFixed(7)+'</td><td class="ltr">'+p.lon.toFixed(7)+'</td><td>'+num(p.alt,2)+'</td><td>'+num(p.accuracy,1)+'</td><td><button class="gray" data-sel-action="target" data-id="'+p.id+'">هدف‌گیری</button> <button class="red" data-sel-action="remove" data-id="'+p.id+'">حذف از انتخاب</button></td></tr>').join('');
+ body.innerHTML=chosen.map((p,i)=>'<tr><td><input type="checkbox" class="selected-check" data-id="'+p.id+'" checked></td><td>'+(i+1)+'</td><td>'+esc(p.name)+'</td><td class="ltr">'+p.lat.toFixed(7)+'</td><td class="ltr">'+p.lon.toFixed(7)+'</td><td>'+num(p.alt,2)+'</td><td>'+num(p.accuracy,1)+'</td><td>'+Number(p.samples||1)+'</td><td><button class="gray" data-sel-action="target" data-id="'+p.id+'">هدف‌گیری</button> <button class="red" data-sel-action="remove" data-id="'+p.id+'">حذف از انتخاب</button></td></tr>').join('');
  drawSelectedPlot();
 }
 function drawSelectedPlot(){
