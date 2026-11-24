@@ -142,7 +142,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <label class="check"><input type="checkbox" id="sound"> صدای تأیید ثبت نقطه</label>
 <div class="row"><button id="saveSettings" class="green">ذخیره تنظیمات</button><button id="clearSamples" class="gray">پاک‌سازی نمونه‌های موقت</button></div>
 </div>
-<div class="card"><h2>اتصال گیرنده GNSS خارجی</h2><div class="row"><button id="serialBtn">اتصال گیرنده سریال / بلوتوث</button><button id="serialStop" class="gray" disabled>قطع اتصال</button></div><div class="stats" style="margin-top:9px"><div class="stat"><small>منبع مختصات</small><strong id="source">GPS گوشی</strong></div><div class="stat"><small>کیفیت FIX گیرنده</small><strong id="fix">در دسترس نیست</strong></div><div class="stat"><small>ماهواره‌ها (NMEA)</small><strong id="sats">—</strong></div><div class="stat"><small>HDOP</small><strong id="hdop">—</strong></div><div class="stat"><small>سن تصحیح تفاضلی (ثانیه)</small><strong id="diffAge">—</strong></div></div><div class="hint">اتصال سریال فقط در مرورگر و گوشی سازگار و برای گیرنده‌ای که خروجی NMEA بدهد فعال می‌شود. HDOP شاخص هندسی است، نه دقت قطعی. اتصال به گیرنده به‌تنهایی تضمین RTK نیست.</div></div><div class="card">
+<div class="card"><h2>اتصال گیرنده GNSS خارجی</h2><label>سرعت ارتباط گیرنده (Baud)</label><select id="serialBaud"><option value="4800">4800</option><option value="9600" selected>9600</option><option value="19200">19200</option><option value="38400">38400</option><option value="57600">57600</option><option value="115200">115200</option></select><div class="row"><button id="serialBtn">اتصال گیرنده سریال / بلوتوث</button><button id="serialStop" class="gray" disabled>قطع اتصال</button></div><div class="stats" style="margin-top:9px"><div class="stat"><small>منبع مختصات</small><strong id="source">GPS گوشی</strong></div><div class="stat"><small>کیفیت FIX گیرنده</small><strong id="fix">در دسترس نیست</strong></div><div class="stat"><small>ماهواره‌ها (NMEA)</small><strong id="sats">—</strong></div><div class="stat"><small>HDOP</small><strong id="hdop">—</strong></div><div class="stat"><small>سن تصحیح تفاضلی (ثانیه)</small><strong id="diffAge">—</strong></div></div><div class="hint">اتصال سریال فقط در مرورگر و گوشی سازگار و برای گیرنده‌ای که خروجی NMEA بدهد فعال می‌شود. HDOP شاخص هندسی است، نه دقت قطعی. اتصال به گیرنده به‌تنهایی تضمین RTK نیست.</div></div><div class="card">
 <h2>محدودیت‌های فنی و وضعیت دقت</h2>
 <ul class="hint" style="padding-right:18px">
 <li>GPS داخلی گوشی معمولاً برای برداشت عمومی مناسب است، نه تضمین دقت سانتی‌متری.</li>
@@ -165,7 +165,7 @@ let db={project:{name:'پروژه جدید',created:new Date().toISOString()},po
 let watch=null,latest=null,auto=false,trackActive=false,trackPaused=false,trackBatch=[],lastTrackSampleTime=0,selectedMap=null,selectedMapLayers=null,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,serialGst=null,orientation=null;
 let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
 const APP_VERSION='2.2.1',RELEASE_KEY='sahroud_rtk_seen_version';
-const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',vibrate:true,sound:false};
+const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',serialBaud:9600,vibrate:true,sound:false};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{}),avgSeconds:3};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
 function status(msg,kind=''){const el=$('quality');el.textContent=msg;el.className='status '+kind;}
@@ -414,13 +414,14 @@ function parseNmea(line){
  if(line.charAt(0)!=="$"||!nmeaChecksumOK(line))return;
  const clean=line.split('*')[0],f=clean.split(','),type=(f[0]||'').slice(-3);
  if(type==='GST'){
-  const latStd=Number(f[6]),lonStd=Number(f[7]),rms=Number(f[2]);
+  const val=v=>v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):NaN;const latStd=val(f[6]),lonStd=val(f[7]),rms=val(f[2]);
   const horizontal=Number.isFinite(latStd)&&Number.isFinite(lonStd)&&latStd>=0&&lonStd>=0?Math.hypot(latStd,lonStd):NaN;
   serialGst={time:Date.now(),accuracy:Number.isFinite(horizontal)?horizontal:NaN,rms:Number.isFinite(rms)?rms:NaN};return;
  }
  if(type!=='GGA'||f.length<12)return;
- const lat=nmeaCoord(f[2],f[3]),lon=nmeaCoord(f[4],f[5]),q=Number(f[6]),sats=Number(f[7]),hdop=Number(f[8]);
- const msl=Number(f[9]),geoid=Number(f[11]),diffAge=Number(f[13]),station=(f[14]||'').trim();
+ const val=v=>v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):NaN;
+ const lat=nmeaCoord(f[2],f[3]),lon=nmeaCoord(f[4],f[5]),q=val(f[6]),sats=val(f[7]),hdop=val(f[8]);
+ const msl=val(f[9]),geoid=val(f[11]),diffAge=val(f[13]),station=(f[14]||'').trim();
  if(!Number.isFinite(lat)||!Number.isFinite(lon)||q===0||!Number.isFinite(q))return;
  const labels={1:'SINGLE / مستقل',2:'DGPS',3:'PPS',4:'RTK FIX',5:'RTK FLOAT',6:'DR / تخمینی',7:'MANUAL',8:'SIMULATION'};
  const hasMsl=Number.isFinite(msl),hasGeoid=Number.isFinite(geoid),ellipsoid=hasMsl&&hasGeoid?msl+geoid:(hasMsl?msl:NaN);
@@ -432,10 +433,10 @@ function parseNmea(line){
  const source='گیرنده GNSS / NMEA • '+serialFix.accuracyMethod;
  addSample({lat,lon,alt:Number.isFinite(ellipsoid)?ellipsoid:null,accuracy:estimatedAccuracy,time:Date.now(),source});
 }
-async function connectSerial(){if(!('serial'in navigator)){alert('Web Serial در این مرورگر یا دستگاه پشتیبانی نمی‌شود. در Chrome به‌روز و با HTTPS امتحان کنید؛ همه گوشی‌ها از Bluetooth Serial پشتیبانی نمی‌کنند.');return;}try{serialPort=await navigator.serial.requestPort();await serialPort.open({baudRate:9600});$('serialStop').disabled=false;$('serialBtn').disabled=true;const decoder=new TextDecoderStream();serialPort.readable.pipeTo(decoder.writable).catch(()=>{});serialReader=decoder.readable.getReader();while(true){let {value,done}=await serialReader.read();if(done)break;serialBuffer+=value;let lines=serialBuffer.split(/\r?\n/);serialBuffer=lines.pop()||'';for(let line of lines)parseNmea(line.trim());}}catch(e){if(e.name!=='AbortError')alert('اتصال گیرنده برقرار نشد: '+e.message);disconnectSerial();}}
+async function connectSerial(){if(!('serial'in navigator)){alert('Web Serial در این مرورگر یا دستگاه پشتیبانی نمی‌شود. در Chrome به‌روز و با HTTPS امتحان کنید؛ همه گوشی‌ها از Bluetooth Serial پشتیبانی نمی‌کنند.');return;}try{serialPort=await navigator.serial.requestPort();await serialPort.open({baudRate:Number($('serialBaud').value)||9600});$('serialStop').disabled=false;$('serialBtn').disabled=true;const decoder=new TextDecoderStream();serialPort.readable.pipeTo(decoder.writable).catch(()=>{});serialReader=decoder.readable.getReader();while(true){let {value,done}=await serialReader.read();if(done)break;serialBuffer+=value;let lines=serialBuffer.split(/\r?\n/);serialBuffer=lines.pop()||'';for(let line of lines)parseNmea(line.trim());}}catch(e){if(e.name!=='AbortError')alert('اتصال گیرنده برقرار نشد: '+e.message);disconnectSerial();}}
 async function disconnectSerial(){try{if(serialReader){await serialReader.cancel();serialReader.releaseLock();}}catch(e){}try{if(serialPort)await serialPort.close();}catch(e){}serialReader=null;serialPort=null;serialFix=null;$('serialStop').disabled=true;$('serialBtn').disabled=false;render();}
-function saveSettings(showMessage=true){db.settings={maxAcc:Number($('maxAcc').value),avgSeconds:Number($('avgSeconds').value),autoDistance:Number($('autoDistance').value),autoInterval:Number($('autoInterval').value),maxAge:Number($('maxAge').value),coordFormat:$('coordFormat').value,vibrate:$('vibrate').checked,sound:$('sound').checked};persist();if(showMessage)status('تنظیمات در حافظه همین گوشی ذخیره شد.','good');stableSince=0;}
-function applySettings(){let s={...defaultSettings,...db.settings};$('maxAcc').value=s.maxAcc;$('avgSeconds').value=s.avgSeconds;$('autoDistance').value=s.autoDistance;$('autoInterval').value=s.autoInterval;$('maxAge').value=s.maxAge;$('coordFormat').value=s.coordFormat;$('vibrate').checked=s.vibrate;$('sound').checked=s.sound;}
+function saveSettings(showMessage=true){db.settings={maxAcc:Number($('maxAcc').value),avgSeconds:Number($('avgSeconds').value),autoDistance:Number($('autoDistance').value),autoInterval:Number($('autoInterval').value),maxAge:Number($('maxAge').value),coordFormat:$('coordFormat').value,serialBaud:Number($('serialBaud').value)||9600,vibrate:$('vibrate').checked,sound:$('sound').checked};persist();if(showMessage)status('تنظیمات در حافظه همین گوشی ذخیره شد.','good');stableSince=0;}
+function applySettings(){let s={...defaultSettings,...db.settings};$('maxAcc').value=s.maxAcc;$('avgSeconds').value=s.avgSeconds;$('autoDistance').value=s.autoDistance;$('autoInterval').value=s.autoInterval;$('maxAge').value=s.maxAge;$('coordFormat').value=s.coordFormat;$('serialBaud').value=s.serialBaud||9600;$('vibrate').checked=s.vibrate;$('sound').checked=s.sound;}
 function renderSelectedPoints(){
  const body=$('selectedTableBody');if(!body)return;const chosen=(db.selectedPointIds||[]).map(id=>db.points.find(p=>p.id===id)).filter(Boolean);
  $('selectedCount').textContent='تعداد نقاط انتخاب‌شده: '+chosen.length;
