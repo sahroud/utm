@@ -88,6 +88,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="card"><h2>مدل ارتفاعی و منحنی میزان</h2>
 <div class="row"><div style="flex:1"><label>فاصله منحنی میزان</label><select id="contourInterval"><option value="0.5">۰٫۵ متر</option><option value="1" selected>۱ متر</option><option value="2">۲ متر</option></select></div><div style="flex:1;align-self:end"><button id="buildTopo" class="green">ساخت مدل و منحنی‌ها</button></div></div>
 <div class="stats" style="margin-top:9px"><div class="stat"><small>نقاط ارتفاع‌دار</small><strong id="topoCount">—</strong></div><div class="stat"><small>کمترین ارتفاع</small><strong id="topoMin">—</strong></div><div class="stat"><small>بیشترین ارتفاع</small><strong id="topoMax">—</strong></div><div class="stat"><small>اختلاف ارتفاع</small><strong id="topoRelief">—</strong></div></div>
+<button id="exportTopoDxf" class="gray" style="margin-top:8px">خروجی DXF توپوگرافی</button>
 <canvas id="topoCanvas" height="380" style="width:100%;height:380px;display:block;background:#f8fbfc;border:1px solid var(--line);border-radius:10px;margin-top:10px"></canvas>
 <div id="topoMessage" class="hint">برای ساخت مدل، حداقل سه نقطه با ارتفاع معتبر و غیرهم‌خط لازم است. مدل فعلی بر پایه TIN و درون‌یابی خطی داخل مثلث‌هاست.</div>
 </div></div>
@@ -144,7 +145,7 @@ const $=id=>document.getElementById(id), num=(v,d=2)=>Number.isFinite(v)?v.toFix
 const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,orientation=null;
-let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false;
+let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null;
 const defaultSettings={maxAcc:10,avgSeconds:10,maxAge:5,coordFormat:'decimal',vibrate:true,sound:false};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{})};}}catch(e){}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
@@ -190,6 +191,21 @@ function triangulateTin(points){
  tris=tris.filter(t=>!bad.includes(t));for(let e of edges)tris.push([e[0],e[1],k]);}
  return tris.filter(t=>t.every(i=>i<n)&&Math.abs((pts[t[1]].x-pts[t[0]].x)*(pts[t[2]].y-pts[t[0]].y)-(pts[t[1]].y-pts[t[0]].y)*(pts[t[2]].x-pts[t[0]].x))>1e-8).map(t=>t.map(i=>pts[i]));
 }
+function joinContourSegments(segments){
+ const groups=new Map(),tol=0.001,key=p=>Math.round(p.x/tol)+','+Math.round(p.y/tol);
+ for(const s of segments){if(!groups.has(s.level))groups.set(s.level,[]);groups.get(s.level).push({a:s.a,b:s.b,used:false});}
+ const result=[];
+ for(const [level,edges] of groups){const adj=new Map();edges.forEach((e,i)=>{for(const p of [e.a,e.b]){let k=key(p);if(!adj.has(k))adj.set(k,[]);adj.get(k).push(i);}});
+  for(let i=0;i<edges.length;i++){if(edges[i].used)continue;edges[i].used=true;let line=[edges[i].a,edges[i].b],guard=0;
+   while(guard++<=edges.length){let end=line[line.length-1],candidates=adj.get(key(end))||[],found=-1,next=null;
+    for(const j of candidates){if(edges[j].used)continue;let e=edges[j],da=Math.hypot(e.a.x-end.x,e.a.y-end.y),db=Math.hypot(e.b.x-end.x,e.b.y-end.y);if(Math.min(da,db)<=tol){found=j;next=da<=db?e.b:e.a;break;}}
+    if(found<0)break;edges[found].used=true;line.push(next);
+   }
+   if(line.length>=2)result.push({level,points:line});
+  }
+ }
+ return result;
+}
 function makeTopo(){
  let raw=topoPoints(),cv=$('topoCanvas'),ctx=cv.getContext('2d'),w=Math.max(280,cv.clientWidth||320),h=380,dpr=Math.min(2,window.devicePixelRatio||1);cv.width=w*dpr;cv.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle='#f8fbfc';ctx.fillRect(0,0,w,h);
  $('topoCount').textContent=raw.length;
@@ -203,9 +219,22 @@ function makeTopo(){
  ctx.strokeStyle='#9aabb4';ctx.lineWidth=1;for(let t of tris){let q=t.map(screen);ctx.beginPath();ctx.moveTo(q[0].x,q[0].y);ctx.lineTo(q[1].x,q[1].y);ctx.lineTo(q[2].x,q[2].y);ctx.closePath();ctx.stroke();}
  let step=Number($('contourInterval').value)||1,first=Math.ceil(minZ/step)*step,segments=[];
  if(maxZ>minZ)for(let level=first;level<=maxZ+1e-8;level+=step){for(let t of tris){let hits=[];for(let i=0;i<3;i++){let a=t[i],b=t[(i+1)%3];if((level>=Math.min(a.z,b.z)&&level<Math.max(a.z,b.z))||(Math.abs(level-a.z)<1e-9&&Math.abs(level-b.z)>1e-9)){let f=(level-a.z)/(b.z-a.z);if(f>=0&&f<=1){let v={x:a.x+f*(b.x-a.x),y:a.y+f*(b.y-a.y)};if(!hits.some(z=>Math.hypot(z.x-v.x,z.y-v.y)<1e-6))hits.push(v);}}}if(hits.length===2)segments.push({level,a:hits[0],b:hits[1]});}}
- ctx.lineWidth=1.6;for(let seg of segments){let a=screen(seg.a),b=screen(seg.b);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='#b06a25';ctx.stroke();}
+ let contours=joinContourSegments(segments);ctx.lineWidth=1.6;for(let line of contours){ctx.beginPath();line.points.forEach((p,i)=>{let q=screen(p);if(i===0)ctx.moveTo(q.x,q.y);else ctx.lineTo(q.x,q.y);});ctx.strokeStyle='#b06a25';ctx.stroke();}
  pts.forEach((p,i)=>{let q=screen(p);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#176b87';ctx.fill();ctx.fillStyle='#18313e';ctx.font='10px Tahoma';ctx.fillText(num(p.z,1),q.x+6,q.y-6);});
- $('topoMessage').textContent='TIN: '+tris.length+' مثلث | قطعات منحنی میزان: '+segments.length+' | فاصله تراز: '+step+' متر. درون‌یابی فقط داخل پوش محدب نقاط انجام شده و بیرون از آن برون‌یابی نمی‌شود. مرزهای مقعر زمین هنوز برش نخورده‌اند؛ برای برداشت دقیق، نقاط ارتفاعی باید پوشش یکنواخت داشته باشند.';
+ lastTopoModel={pts,tris,segments,contours,lat0,lon0,cos,step,minZ,maxZ};$('topoMessage').textContent='TIN: '+tris.length+' مثلث | خطوط پیوسته منحنی میزان: '+contours.length+' ('+segments.length+' قطعه) | فاصله تراز: '+step+' متر. درون‌یابی فقط داخل پوش محدب نقاط انجام شده و مرزهای مقعر زمین هنوز برش نخورده‌اند.';
+}
+function exportTopoDxf(){
+ if(!lastTopoModel){alert('ابتدا مدل TIN و منحنی میزان را بسازید.');return;}
+ const m=lastTopoModel,zoneSet=new Set(),projected=[];
+ const localToGeo=p=>({lat:m.lat0+p.y/110540,lon:m.lon0+p.x/(111320*m.cos)});
+ for(const p of m.pts){const u=toUtm(p.ref.lat,p.ref.lon);zoneSet.add(u.zone);projected.push({p,u});}
+ const contourUtm=m.contours.map(line=>({level:line.level,points:line.points.map(p=>{const g=localToGeo(p);const u=toUtm(g.lat,g.lon);zoneSet.add(u.zone);return u;})}));
+ if(zoneSet.size!==1){alert('نقاط یا خطوط تراز در بیش از یک زون UTM قرار می‌گیرند؛ خروجی DXF برای جلوگیری از خطای مختصات لغو شد.');return;}
+ let d=['0','SECTION','2','HEADER','9','$INSUNITS','70','6','0','ENDSEC','0','SECTION','2','ENTITIES'];
+ for(const {p,u} of projected){d.push('0','POINT','8','ELEVATION_POINTS','10',String(u.E),'20',String(u.N),'30',String(p.z));d.push('0','TEXT','8','ELEVATION_LABELS','10',String(u.E),'20',String(u.N+0.6),'30',String(p.z),'40','1.2','1',String(p.ref.name||'').replace(/[\\r\\n]/g,' '));}
+ let count=0;for(const line of contourUtm){if(line.points.length<2)continue;d.push('0','LWPOLYLINE','8','CONTOUR_'+String(line.level).replace(/[^0-9.-]/g,'_'),'90',String(line.points.length),'70','0','38',String(line.level));for(const u of line.points)d.push('10',String(u.E),'20',String(u.N));count++;}
+ d.push('0','ENDSEC','0','EOF');download('sahroud-topography.dxf',d.join('\\r\\n'),'application/dxf');
+ $('topoMessage').textContent+=' | خروجی DXF آماده شد: '+count+' خط تراز و '+projected.length+' نقطه ارتفاعی.';
 }
 function targetUpdate(){let p=selected('targetPoint');if(!p||!latest){$('targetDistance').textContent='—';$('targetAz').textContent='—';return;}let d=distance(latest,p),b=bearing(latest,p);$('targetDistance').textContent=num(d,2)+' m';$('targetAz').textContent=num(b,1)+'°';$('targetStatus').textContent='جهت تقریبی از شمال: '+num(b,1)+' درجه؛ فاصله مستقیم: '+num(d,2)+' متر. جهت‌نمای گوشی را با کالیبراسیون مناسب به‌کار ببرید.';}
 function download(name,content,type){let blob=new Blob([content],{type}),a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
@@ -226,7 +255,7 @@ window.addEventListener('resize',()=>{if(document.querySelector('[data-tab="poin
 $('startBtn').onclick=startGps;$('stopBtn').onclick=stopGps;$('saveBtn').onclick=()=>savePoint(false);$('mapBtn').onclick=()=>{if(!latest)return;let u='https://www.openstreetmap.org/?mlat='+latest.lat+'&mlon='+latest.lon+'#map=18/'+latest.lat+'/'+latest.lon;window.open(u,'_blank','noopener');};$('autoBtn').onclick=()=>{auto=!auto;stableSince=0;$('autoBtn').textContent='ثبت خودکار: '+(auto?'روشن':'خاموش');$('autoBtn').className=auto?'green':'orange';};$('avgBtn').onclick=()=>{samples=[];stableSince=0;render();};$('clearSamples').onclick=()=>{samples=[];stableSince=0;render();status('نمونه‌های موقت پاک شدند.');};
 $('compassBtn').onclick=async()=>{try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){let p=await DeviceOrientationEvent.requestPermission();if(p!=='granted')throw Error('مجوز قطب‌نما داده نشد');}window.addEventListener('deviceorientationabsolute',onOrientation,true);window.addEventListener('deviceorientation',onOrientation,true);compassEnabled=true;status('حسگر جهت‌یابی فعال شد.','good');}catch(e){status('قطب‌نما در این دستگاه در دسترس نیست یا مجوز داده نشد.','bad');}};
 function onOrientation(e){let h=Number.isFinite(e.webkitCompassHeading)?e.webkitCompassHeading:Number.isFinite(e.alpha)?(360-e.alpha)%360:NaN;if(Number.isFinite(h))orientation=h;render();}
-$('serialBtn').onclick=connectSerial;$('serialStop').onclick=disconnectSerial;$('buildTopo').onclick=makeTopo;$('contourInterval').onchange=()=>{if($('topoCount').textContent!=='—')makeTopo();};
+$('serialBtn').onclick=connectSerial;$('serialStop').onclick=disconnectSerial;$('buildTopo').onclick=makeTopo;$('exportTopoDxf').onclick=exportTopoDxf;$('contourInterval').onchange=()=>{if($('topoCount').textContent!=='—')makeTopo();};
 $('lineCalc').onclick=calcLine;$('utmCalc').onclick=calcUtm;$('areaCalc').onclick=calcArea;$('targetPoint').onchange=targetUpdate;$('p1').onchange=()=>{};$('p2').onchange=()=>{};
 $('pointList').onclick=e=>{let b=e.target.closest('button[data-action]');if(!b)return;let p=db.points.find(x=>x.id===b.dataset.id);if(!p)return;if(b.dataset.action==='boundary'){p.boundary=!isBoundary(p);persist();renderPoints();}else if(b.dataset.action==='delete'){if(confirm('این نقطه حذف شود؟')){db.points=db.points.filter(x=>x.id!==p.id);persist();renderPoints();renderSelects();}}else if(b.dataset.action==='up'||b.dataset.action==='down'){let i=db.points.findIndex(x=>x.id===p.id),j=i+(b.dataset.action==='up'?-1:1);if(j>=0&&j<db.points.length){[db.points[i],db.points[j]]=[db.points[j],db.points[i]];persist();renderPoints();renderSelects();}}else{$('targetPoint').value=p.id;document.querySelector('[data-tab="calc"]').click();targetUpdate();}};
 $('newProject').onclick=()=>{if(db.points.length&&!confirm('پروژه فعلی در پشتیبان ذخیره نشده است. پروژه جدید ایجاد شود؟'))return;db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{...db.settings}};$('projectName').value=db.project.name;persist();renderPoints();renderSelects();};
