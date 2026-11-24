@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102f43">
-<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.2.1">
+<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.2.2">
 <link rel="manifest" href="./manifest.json">
 <link rel="preload" as="style" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript><title>SAHROUD RTK | برداشت هوشمند</title>
 <style>
@@ -156,7 +156,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="footer">SAHROUD • ابزار برداشت و کنترل کیفیت • داده‌ها روی دستگاه شما ذخیره می‌شوند</div>
 </main>
 <div id="topoPrintSheet"></div>
-<div id="releaseOverlay" class="release-overlay" aria-modal="true" role="dialog" aria-labelledby="releaseTitle"><div class="release-card"><div class="release-kicker">SAHROUD RTK • به‌روزرسانی</div><h2 id="releaseTitle">نسخه 2.2.1</h2><p>در این نسخه:</p><ul><li>بهبود تحلیل NMEA برای گیرنده‌های GNSS خارجی و پشتیبانی از GGA/GST</li><li>تشخیص دقیق‌تر وضعیت‌های RTK FIX و RTK FLOAT و سایر کیفیت‌های FIX</li><li>نمایش سن تصحیح تفاضلی و شناسه ایستگاه مرجع در داده گیرنده</li><li>استفاده از دقت افقی GST در صورت وجود؛ در غیر این صورت برآورد HDOP با برچسب مشخص</li><li>تبدیل ارتفاع MSL به ارتفاع بیضوی در صورت دریافت جدایی ژئوئید از NMEA</li><li>بررسی checksum جملات NMEA در صورت ارائه توسط گیرنده</li></ul><button id="closeRelease" class="green" style="width:100%">متوجه شدم و ادامه می‌دهم</button></div></div>
+<div id="releaseOverlay" class="release-overlay" aria-modal="true" role="dialog" aria-labelledby="releaseTitle"><div class="release-card"><div class="release-kicker">SAHROUD RTK • به‌روزرسانی</div><h2 id="releaseTitle">نسخه 2.2.2</h2><p>در این نسخه:</p><ul><li>رفع اختلال شروع و بازشدن صفحه اصلی؛ بارگذاری نقشه دیگر مانع نمایش اولیه برنامه نمی‌شود</li><li>حذف بارگذاری مجدد اجباری هنگام فعال‌شدن Service Worker در اولین ورود</li><li>پاک‌سازی کد اضافی انتهای فایل HTML و اصلاح ذخیره تنظیم سرعت ارتباط گیرنده</li><li>بهبود تحلیل NMEA برای گیرنده‌های GNSS خارجی و پشتیبانی از GGA/GST</li><li>تشخیص دقیق‌تر وضعیت‌های RTK FIX و RTK FLOAT و سایر کیفیت‌های FIX</li><li>نمایش سن تصحیح تفاضلی و شناسه ایستگاه مرجع در داده گیرنده</li><li>استفاده از دقت افقی GST در صورت وجود؛ در غیر این صورت برآورد HDOP با برچسب مشخص</li><li>تبدیل ارتفاع MSL به ارتفاع بیضوی در صورت دریافت جدایی ژئوئید از NMEA</li><li>بررسی checksum جملات NMEA در صورت ارائه توسط گیرنده</li></ul><button id="closeRelease" class="green" style="width:100%">متوجه شدم و ادامه می‌دهم</button></div></div>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), num=(v,d=2)=>Number.isFinite(v)?v.toFixed(d):'—';
@@ -164,7 +164,7 @@ const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,trackActive=false,trackPaused=false,trackBatch=[],lastTrackSampleTime=0,selectedMap=null,selectedMapLayers=null,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,serialGst=null,orientation=null;
 let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
-const APP_VERSION='2.2.1',RELEASE_KEY='sahroud_rtk_seen_version';
+const APP_VERSION='2.2.2',RELEASE_KEY='sahroud_rtk_seen_version';
 const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',serialBaud:9600,vibrate:true,sound:false};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{}),avgSeconds:3};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
