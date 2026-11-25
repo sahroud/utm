@@ -620,27 +620,21 @@ function nmeaCoord(v,dir){
  const x=deg+min/60;return dir==='S'||dir==='W'?-x:x;
 }
 function parseNmea(line){
- if(line.charAt(0)!=="$"||!nmeaChecksumOK(line))return;
- const clean=line.split('*')[0],f=clean.split(','),type=(f[0]||'').slice(-3);
- if(type==='GST'){
-  const val=v=>v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):NaN;const latStd=val(f[6]),lonStd=val(f[7]),rms=val(f[2]);
-  const horizontal=Number.isFinite(latStd)&&Number.isFinite(lonStd)&&latStd>=0&&lonStd>=0?Math.hypot(latStd,lonStd):NaN;
-  serialGst={time:Date.now(),accuracy:Number.isFinite(horizontal)?horizontal:NaN,rms:Number.isFinite(rms)?rms:NaN};return;
+ const parsed=window.SAHROUD_GNSS?.parseNmea(line);
+ if(!parsed)return;
+ if(parsed.type==='GST'){
+  serialGst={time:Date.now(),accuracy:parsed.accuracy===null?NaN:parsed.accuracy,rms:parsed.rms===null?NaN:parsed.rms};
+  return;
  }
- if(type!=='GGA'||f.length<12)return;
- const val=v=>v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):NaN;
- const lat=nmeaCoord(f[2],f[3]),lon=nmeaCoord(f[4],f[5]),q=val(f[6]),sats=val(f[7]),hdop=val(f[8]);
- const msl=val(f[9]),geoid=val(f[11]),diffAge=val(f[13]),station=(f[14]||'').trim();
- if(!Number.isFinite(lat)||!Number.isFinite(lon)||q===0||!Number.isFinite(q))return;
  const labels={1:'SINGLE / مستقل',2:'DGPS',3:'PPS',4:'RTK FIX',5:'RTK FLOAT',6:'DR / تخمینی',7:'MANUAL',8:'SIMULATION'};
- const hasMsl=Number.isFinite(msl),hasGeoid=Number.isFinite(geoid),ellipsoid=hasMsl&&hasGeoid?msl+geoid:(hasMsl?msl:NaN);
  const gstFresh=serialGst&&Date.now()-serialGst.time<=2500&&Number.isFinite(serialGst.accuracy);
- const estimatedAccuracy=gstFresh?serialGst.accuracy:(Number.isFinite(hdop)&&hdop>0?Math.max(.5,hdop*3):99);
- serialFix={fix:labels[q]||'FIX '+q,quality:q,sats,hdop:Number.isFinite(hdop)?num(hdop,1):'—',diffAge:Number.isFinite(diffAge)&&diffAge>=0?diffAge:NaN,station,accuracyMethod:gstFresh?'GST':'برآورد تقریبی HDOP',altitudeReference:hasGeoid?'ارتفاع بیضوی WGS84 (MSL + جدایی ژئوئید)':(hasMsl?'ارتفاع MSL؛ بدون تبدیل ژئوئید':'ناموجود')};
- $('fix').textContent=serialFix.fix;$('sats').textContent=sats;$('hdop').textContent=serialFix.hdop;
+ const estimatedAccuracy=gstFresh?serialGst.accuracy:(Number.isFinite(parsed.hdop)&&parsed.hdop>0?Math.max(.5,parsed.hdop*3):99);
+ const fixLabel=labels[parsed.quality]||'FIX '+parsed.quality;
+ serialFix={fix:fixLabel,quality:parsed.quality,sats:parsed.sats,hdop:Number.isFinite(parsed.hdop)?num(parsed.hdop,1):'—',diffAge:Number.isFinite(parsed.diffAge)&&parsed.diffAge>=0?parsed.diffAge:NaN,station:parsed.station,accuracyMethod:gstFresh?'GST':'برآورد تقریبی HDOP',altitudeReference:parsed.geoid!==null?'ارتفاع بیضوی WGS84 (MSL + جدایی ژئوئید)':(parsed.msl!==null?'ارتفاع MSL؛ بدون تبدیل ژئوئید':'ناموجود')};
+ $('fix').textContent=serialFix.fix;$('sats').textContent=parsed.sats??'—';$('hdop').textContent=serialFix.hdop;
  $('diffAge').textContent=Number.isFinite(serialFix.diffAge)?num(serialFix.diffAge,1):'—';
  const source='گیرنده GNSS / NMEA • '+serialFix.accuracyMethod;
- addSample({lat,lon,alt:Number.isFinite(ellipsoid)?ellipsoid:null,accuracy:estimatedAccuracy,time:Date.now(),source});
+ addSample({lat:parsed.lat,lon:parsed.lon,alt:parsed.ellipsoid,accuracy:estimatedAccuracy,time:Date.now(),source,fix:fixLabel,sats:parsed.sats,hdop:parsed.hdop,diffAge:parsed.diffAge});
 }
 async function connectSerial(){if(!('serial'in navigator)){alert('Web Serial در این مرورگر یا دستگاه پشتیبانی نمی‌شود. در Chrome به‌روز و با HTTPS امتحان کنید؛ همه گوشی‌ها از Bluetooth Serial پشتیبانی نمی‌کنند.');return;}try{serialPort=await navigator.serial.requestPort();await serialPort.open({baudRate:Number($('serialBaud').value)||9600});$('serialStop').disabled=false;$('serialBtn').disabled=true;const decoder=new TextDecoderStream();serialPort.readable.pipeTo(decoder.writable).catch(()=>{});serialReader=decoder.readable.getReader();while(true){let {value,done}=await serialReader.read();if(done)break;serialBuffer+=value;let lines=serialBuffer.split(/\r?\n/);serialBuffer=lines.pop()||'';for(let line of lines)parseNmea(line.trim());}}catch(e){if(e.name!=='AbortError')alert('اتصال گیرنده برقرار نشد: '+e.message);disconnectSerial();}}
 async function disconnectSerial(){try{if(serialReader){await serialReader.cancel();serialReader.releaseLock();}}catch(e){}try{if(serialPort)await serialPort.close();}catch(e){}serialReader=null;serialPort=null;serialFix=null;serialGst=null;$('serialStop').disabled=true;$('serialBtn').disabled=false;render();}
