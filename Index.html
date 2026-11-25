@@ -710,27 +710,24 @@ function startGPS(){
      :fix.alt.toFixed(2)+" متر";
 
    $("accuracy").textContent=
-     (fix.accuracy===null?NaN:fix.accuracy).toFixed(2)+" متر";
+     (fix.accuracy===null?"ناموجود":fix.accuracy.toFixed(2)+" متر");
 
    $("qualityInfo").textContent=
-     "دقت گزارش‌شده گوشی: "+
-     c.accuracy.toFixed(2)+
-     " متر. این مقدار تضمین دقت واقعی نیست.";
+     "دقت گزارش‌شده گوشی: "+(fix.accuracy===null?"ناموجود":fix.accuracy.toFixed(2)+" متر")+". این مقدار تضمین دقت واقعی نیست.";
 
    $("savePoint").disabled=false;
 
    $("stopGPS").disabled=false;
 
    setStatus(
-     "موقعیت GPS دریافت شد. دقت گزارش‌شده: "+
-     c.accuracy.toFixed(2)+" متر",
+     "موقعیت GPS دریافت شد. دقت گزارش‌شده: "+(fix.accuracy===null?"ناموجود":fix.accuracy.toFixed(2)+" متر"),
      "good"
    );
 
    if(map && points.length===0){
 
      map.setView(
-       [c.latitude,c.longitude],
+       [fix.lat,fix.lon],
        17
      );
 
