@@ -319,7 +319,7 @@ function mergeTracks(){
  if(!confirm(msg))return;
  const points=[...JSON.parse(JSON.stringify(first.points)),...JSON.parse(JSON.stringify(last.points))];
  const id='TRK-M-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
- const merged={...JSON.parse(JSON.stringify(a)),id,name:a.name+' + '+b.name,points,status:'completed',start:points[0].time||first.start,end:points[points.length-1].time||last.end,mergedFrom:[first.id,last.id],segmentBreaks:[first.points.length],syntheticConnector:{fromIndex:first.points.length-1,toIndex:first.points.length,recorded:false}};
+ const merged={...JSON.parse(JSON.stringify(a)),id,name:a.name+' + '+b.name,points,status:'completed',start:points[0].time||first.start,end:points[points.length-1].time||last.end,mergedFrom:[first.id,last.id],segmentBreaks:[...trackSegments(first).slice(1).map(x=>x.from),first.points.length,...trackSegments(last).slice(1).map(x=>first.points.length+x.from)],syntheticConnector:{fromIndex:first.points.length-1,toIndex:first.points.length,recorded:false}};
  db.tracks.push(merged);selectedTrackId=id;persist();updateTrackUI();drawTrackMap();renderTrackList();refreshTrackMergeOptions();status('مسیر ترکیبی جدید ساخته شد؛ مسیرهای اصلی حفظ شده‌اند.','good');
 }
 function swapTrackPoint(){
