@@ -475,6 +475,7 @@ Location گوشی را روشن کنید و مجوز موقعیت مرورگر �
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<script src="./shared/gnss-engine.js"></script>
 <script>
 "use strict";
 
@@ -691,40 +692,19 @@ function startGPS(){
  function(position){
 
    const c=position.coords;
-
-   currentPosition={
-
-     lat:c.latitude,
-     lon:c.longitude,
-     alt:c.altitude,
-     accuracy:c.accuracy,
-     timestamp:position.timestamp
-
-   };
-
-   const utm=latLonToUTM(
-     c.latitude,
-     c.longitude
-   );
-
-   $("lat").textContent=c.latitude.toFixed(7);
-
-   $("lon").textContent=c.longitude.toFixed(7);
-
+   const fix=window.SAHROUD_GNSS?.normalizeFix({
+     lat:c.latitude,lon:c.longitude,alt:c.altitude,accuracy:c.accuracy,
+     time:position.timestamp,source:"GPS گوشی"
+   },{maxAccuracy:200});
+   if(!fix){setStatus("مختصات دریافتی نامعتبر است یا خطای آن بیش از حد مجاز است.","bad");return;}
+   currentPosition={...fix,timestamp:fix.time};
+   const utm=latLonToUTM(fix.lat,fix.lon);
+   $("lat").textContent=fix.lat.toFixed(7);
+   $("lon").textContent=fix.lon.toFixed(7);
    $("utm").textContent=utm.formatted;
-
-   $("alt").textContent=
-     c.altitude===null
-     ?"ناموجود"
-     :c.altitude.toFixed(2)+" متر";
-
-   $("accuracy").textContent=
-     c.accuracy.toFixed(2)+" متر";
-
-   $("qualityInfo").textContent=
-     "دقت گزارش‌شده گوشی: "+
-     c.accuracy.toFixed(2)+
-     " متر. این مقدار تضمین دقت واقعی نیست.";
+   $("alt").textContent=fix.alt===null?"ناموجود":fix.alt.toFixed(2)+" متر";
+   $("accuracy").textContent=fix.accuracy===null?"ناموجود":fix.accuracy.toFixed(2)+" متر";
+   $("qualityInfo").textContent="دقت گزارش‌شده گوشی: "+(fix.accuracy===null?"ناموجود":fix.accuracy.toFixed(2)+" متر")+"؛ این مقدار تضمین دقت واقعی نیست.";
 
    $("savePoint").disabled=false;
 
@@ -739,7 +719,7 @@ function startGPS(){
    if(map && points.length===0){
 
      map.setView(
-       [c.latitude,c.longitude],
+       [fix.lat,fix.lon],
        17
      );
 
