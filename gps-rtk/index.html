@@ -355,38 +355,58 @@ function drawLongitudinalAnalysis(){
  const t=currentTrack(),pts=t?.points||[],recorded=trackSegments(t),summary=$('trackGradeSummary'),info=$('trackGradeInfo'),table=$('trackBreakTable'),thresholdEl=$('trackBreakThreshold');
  if(!summary||!info||!table)return;
  const fmt=x=>Number.isFinite(x)?(x>0?'+':'')+x.toFixed(2):'—';
- let cumulative=0,totalRun=0,totalRise=0,validPairs=0,missingPairs=0;const grades=[],validHeights=[];
+ if(!t)return;
+ if(!Array.isArray(t.surfaceBreaks))t.surfaceBreaks=[];
+ const marked=new Set(t.surfaceBreaks.filter(Number.isInteger));
+ let cumulative=0,totalRun=0,totalRise=0,validPairs=0,missingPairs=0,boundaryPairs=0;const grades=[],validHeights=[],qc=[];
+ const jumpMin=1.0,slopeMin=15;
  recorded.forEach(part=>{
   for(let i=part.from;i<part.to;i++){
    const p=pts[i],z=p.alt!==null&&p.alt!==''?Number(p.alt):NaN;
    if(Number.isFinite(z))validHeights.push({i,z,segment:part.index});
    if(i===part.from)continue;
    const prev=pts[i-1],a=prev.alt!==null&&prev.alt!==''?Number(prev.alt):NaN,b=z,d=distance(prev,p);
-   if(!Number.isFinite(a)||!Number.isFinite(b)||!Number.isFinite(d)||d<0.5){missingPairs++;continue;}
-   const rise=b-a,grade=rise/d*100;totalRun+=d;totalRise+=rise;validPairs++;
-   grades.push({from:i-1,to:i,segment:part.index,grade,dist:cumulative+d});
-   cumulative+=d;
+   if(Number.isFinite(a)&&Number.isFinite(b)&&Number.isFinite(d)&&d>=0.5){
+    const rise=b-a,grade=rise/d*100;
+    if(Math.abs(rise)>=jumpMin&&Math.abs(grade)>=slopeMin)qc.push({point:i+1,from:i-1,to:i,dist:d,rise,grade,marked:marked.has(i)});
+    if(marked.has(i)){boundaryPairs++;continue;}
+    totalRun+=d;totalRise+=rise;validPairs++;grades.push({from:i-1,to:i,segment:part.index,grade,dist:cumulative+d});cumulative+=d;
+   }else missingPairs++;
   }
  });
  if(validPairs===0){
-  summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع تجمعی</small><strong>—</strong></div><div class="stat"><small>طول افقی معتبر</small><strong>—</strong></div><div class="stat"><small>شیب متوسط قطعات</small><strong>—</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong>۰</strong></div>';
-  info.textContent='برای محاسبه شیب، حداقل یک جفت نقطه متوالی با ارتفاع معتبر در یک قطعه برداشت لازم است.';
-  table.innerHTML='<div class="hint">داده ارتفاعی پیوسته کافی نیست؛ بین قطعات ادغام‌شده یا نقاط فاقد ارتفاع، شیب فرضی محاسبه نمی‌شود.</div>';return;
+  summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع پیوسته</small><strong>—</strong></div><div class="stat"><small>طول افقی معتبر</small><strong>—</strong></div><div class="stat"><small>شیب متوسط</small><strong>—</strong></div><div class="stat"><small>شکست شیب</small><strong>۰</strong></div>';
+  info.textContent='برای محاسبه شیب پیوسته، یک جفت نقطه متوالی با ارتفاع معتبر و بدون مرز عارضه لازم است.';
+ }else{
+  const avg=totalRun>0?totalRise/totalRun*100:NaN;
+  summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع پیوسته</small><strong>'+fmt(totalRise)+' m</strong></div><div class="stat"><small>طول افقی معتبر</small><strong>'+totalRun.toFixed(1)+' m</strong></div><div class="stat"><small>شیب متوسط وزنی</small><strong>'+fmt(avg)+' %</strong></div><div class="stat"><small>شکست شیب</small><strong id="trackBreakCount">۰</strong></div>';
  }
- const avg=totalRun>0?totalRise/totalRun*100:NaN;
- summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع تجمعی قطعات</small><strong>'+fmt(totalRise)+' m</strong></div><div class="stat"><small>طول افقی معتبر</small><strong>'+totalRun.toFixed(1)+' m</strong></div><div class="stat"><small>شیب متوسط وزنی</small><strong>'+fmt(avg)+' %</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong id="trackBreakCount">۰</strong></div>';
  const threshold=Number(thresholdEl?.value||2),breaks=[];
  if(Number.isFinite(threshold)&&threshold>0)for(let i=1;i<grades.length;i++){
   const prev=grades[i-1],cur=grades[i],delta=cur.grade-prev.grade;
   if(cur.segment===prev.segment&&cur.from===prev.to&&Math.abs(delta)>=threshold)breaks.push({point:cur.to+1,dist:cur.dist,before:prev.grade,after:cur.grade,delta});
  }
  const count=$('trackBreakCount');if(count)count.textContent=String(breaks.length);
- const first=validHeights[0],last=validHeights[validHeights.length-1];
- info.textContent='جفت نقاط قابل محاسبه: '+validPairs+' | جفت حذف‌شده به‌علت ارتفاع نامعتبر/فاصله کوتاه: '+missingPairs+' | ارتفاع‌ها از داده GPS/گیرنده‌اند و بدون مرجع ژئوئید یا کنترل ترازیابی، ارتفاع مبنای نقشه‌برداری قطعی نیستند.';
- if(!breaks.length){table.innerHTML='<div class="hint">با آستانه '+threshold.toFixed(1)+'٪ شکست شیب پیوسته‌ای شناسایی نشد. مقایسه شیب فقط درون هر قطعه برداشت انجام شده است.</div>';return;}
- table.innerHTML='<table><thead><tr><th>نقطه شکست</th><th>فاصله تجمعی قطعات (m)</th><th>شیب قبل (%)</th><th>شیب بعد (%)</th><th>تغییر شیب (%)</th></tr></thead><tbody>'+breaks.slice(0,30).map(b=>'<tr><td>'+b.point+'</td><td>'+b.dist.toFixed(1)+'</td><td>'+fmt(b.before)+'</td><td>'+fmt(b.after)+'</td><td>'+fmt(b.delta)+'</td></tr>').join('')+'</tbody></table>'+(breaks.length>30?'<div class="hint">۳۰ مورد از '+breaks.length+' شکست نمایش داده شده است.</div>':'');
+ info.textContent='جفت معتبر: '+validPairs+' | مرز عارضه مستثنا: '+boundaryPairs+' | جفت نامعتبر/کوتاه: '+missingPairs+' | ارتفاع GPS بدون کنترل ترازیابی، ارتفاع قطعی نقشه‌برداری نیست.';
+ let html='';
+ if(breaks.length)html+='<div class="hint">شکست‌های شیب پیوسته</div><table><thead><tr><th>نقطه</th><th>فاصله (m)</th><th>قبل (%)</th><th>بعد (%)</th><th>تغییر (%)</th></tr></thead><tbody>'+breaks.slice(0,30).map(b=>'<tr><td>'+b.point+'</td><td>'+b.dist.toFixed(1)+'</td><td>'+fmt(b.before)+'</td><td>'+fmt(b.after)+'</td><td>'+fmt(b.delta)+'</td></tr>').join('')+'</tbody></table>';
+ else html+='<div class="hint">شکست شیب پیوسته‌ای با آستانه '+(Number.isFinite(threshold)?threshold.toFixed(1):'۲')+'٪ شناسایی نشد.</div>';
+ html+='<div class="hint" style="font-weight:bold;margin-top:10px">کنترل کیفیت اختلاف ارتفاع و مرز عوارض</div><div class="hint">جهش‌های احتمالی فقط هشدار هستند. برای نمونه، بالای دیوار نگهبان تا کف زمین پروژه یک مرز واقعی است؛ آن را علامت‌گذاری کنید تا اختلاف دو سطح در شیب پیوسته محاسبه نشود. هیچ نقطه‌ای خودکار حذف یا اصلاح نمی‌شود.</div>';
+ if(qc.length)html+='<table><thead><tr><th>گذار بین نقاط</th><th>فاصله</th><th>Δ ارتفاع</th><th>شیب ظاهری</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>'+qc.map(q=>'<tr><td>'+(q.from+1)+' ← '+q.to+'</td><td>'+q.dist.toFixed(1)+' m</td><td>'+fmt(q.rise)+' m</td><td>'+fmt(q.grade)+'٪</td><td>'+(q.marked?'مرز عارضه ثبت‌شده':'مشکوک؛ بررسی شود')+'</td><td><button type="button" data-surface-boundary="'+q.to+'">'+(q.marked?'لغو مرز':'ثبت مرز واقعی')+'</button></td></tr>').join('')+'</tbody></table>';
+ else html+='<div class="hint">جهش ارتفاعی با معیار اولیه (حداقل ۱ متر و شیب ظاهری ۱۵٪) پیدا نشد. این معیار صرفاً هشدار اولیه است.</div>';
+ if(marked.size)html+='<div class="hint">مرزهای ثبت‌شده: '+[...marked].sort((a,b)=>a-b).map(i=>'بین '+i+' و '+(i+1)).join('، ')+'</div>';
+ table.innerHTML=html;
 }
-
+function toggleSurfaceBoundary(pointIndex){
+ if(trackActive){alert('برای ثبت یا لغو مرز عارضه، ابتدا برداشت را مکث یا تمام کنید.');return;}
+ const t=currentTrack();if(!t)return;
+ if(!Array.isArray(t.surfaceBreaks))t.surfaceBreaks=[];
+ const i=Number(pointIndex);if(!Number.isInteger(i)||i<1||i>=t.points.length)return;
+ const set=new Set(t.surfaceBreaks);
+ if(set.has(i))set.delete(i);else set.add(i);
+ t.surfaceBreaks=[...set].sort((a,b)=>a-b);t.editedAt=new Date().toISOString();persist();drawTrackCharts();
+ status(set.has(i)?'مرز واقعی عارضه ثبت شد؛ اختلاف دو سطح از شیب پیوسته جدا شد.':'علامت مرز عارضه لغو شد.','good');
+}
 function deleteTrackRange(){
  if(trackActive){alert('ابتدا برداشت مسیر را مکث یا تمام کنید.');return;}
  const t=currentTrack();if(!t||!Array.isArray(t.points))return;
@@ -736,7 +756,7 @@ $('addSelectedPoints').onclick=()=>{if(!(db.selectedPointIds||[]).length){alert(
 $('selectedSelectAll').onclick=()=>setPointSelection(db.points.map(p=>p.id));
 $('removeSelectedPoints').onclick=()=>{if(!(db.selectedPointIds||[]).length)return;setPointSelection([]);};
 $('deleteSelectedPoints').onclick=()=>{let ids=new Set(db.selectedPointIds||[]);if(!ids.size)return;if(!confirm('آیا نقاط انتخاب‌شده به‌طور دائمی از پروژه حذف شوند؟'))return;db.points=db.points.filter(p=>!ids.has(p.id));db.selectedPointIds=[];persist();renderPoints();renderSelects();};
-$('exportSelectedCsv').onclick=exportSelectedCsv;$('exportSelectedGeo').onclick=exportSelectedGeo;$('fitSelectedMap').onclick=drawSelectedPlot;$('trackStart').onclick=startTrack;$('trackPause').onclick=pauseTrack;$('trackStop').onclick=stopTrack;$('trackMark').onclick=markTrackPoint;$('trackPointEdit').onclick=editTrackPoint;$('trackMerge').onclick=mergeTracks;$('trackPointSwap').onclick=swapTrackPoint;$('trackPointDelete').onclick=deleteTrackPoint;$('trackDeleteRange').onclick=deleteTrackRange;$('trackBreakThreshold').addEventListener('input',drawLongitudinalAnalysis);['trackRangeFrom','trackRangeTo'].forEach(id=>$(id).addEventListener('input',drawTrackCharts));$('trackSplit').onclick=splitTrackAtPoint;$('trackResume').onclick=resumeTrack;$('trackRename').onclick=renameTrack;$('trackDelete').onclick=deleteTrack;$('trackList').onchange=e=>{if(e.target.name==='trackSelect')selectTrack(e.target.value);};$('exportTrackGeo').onclick=exportTrackGeo;$('exportTrackGpx').onclick=exportTrackGpx;$('exportTrackCsv').onclick=exportTrackCsv;$('exportTrackDxf').onclick=exportTrackDxf;$('exportTrackReport').onclick=exportTrackReport;
+$('exportSelectedCsv').onclick=exportSelectedCsv;$('exportSelectedGeo').onclick=exportSelectedGeo;$('fitSelectedMap').onclick=drawSelectedPlot;$('trackStart').onclick=startTrack;$('trackPause').onclick=pauseTrack;$('trackStop').onclick=stopTrack;$('trackMark').onclick=markTrackPoint;$('trackPointEdit').onclick=editTrackPoint;$('trackMerge').onclick=mergeTracks;$('trackPointSwap').onclick=swapTrackPoint;$('trackPointDelete').onclick=deleteTrackPoint;$('trackDeleteRange').onclick=deleteTrackRange;$('trackBreakThreshold').addEventListener('input',drawLongitudinalAnalysis);$('trackBreakTable').addEventListener('click',e=>{const b=e.target.closest('[data-surface-boundary]');if(b)toggleSurfaceBoundary(b.getAttribute('data-surface-boundary'));});['trackRangeFrom','trackRangeTo'].forEach(id=>$(id).addEventListener('input',drawTrackCharts));$('trackSplit').onclick=splitTrackAtPoint;$('trackResume').onclick=resumeTrack;$('trackRename').onclick=renameTrack;$('trackDelete').onclick=deleteTrack;$('trackList').onchange=e=>{if(e.target.name==='trackSelect')selectTrack(e.target.value);};$('exportTrackGeo').onclick=exportTrackGeo;$('exportTrackGpx').onclick=exportTrackGpx;$('exportTrackCsv').onclick=exportTrackCsv;$('exportTrackDxf').onclick=exportTrackDxf;$('exportTrackReport').onclick=exportTrackReport;
 $('newProject').onclick=()=>{if(db.points.length&&!confirm('پروژه فعلی در پشتیبان ذخیره نشده است. پروژه جدید ایجاد شود؟'))return;db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{...db.settings}};$('projectName').value=db.project.name;persist();renderPoints();renderSelects();};
 $('projectName').onchange=()=>{db.project.name=$('projectName').value.trim()||'پروژه بدون نام';persist();};
 $('exportJson').onclick=()=>download('sahroud-project-backup.json',JSON.stringify(db,null,2),'application/json');
