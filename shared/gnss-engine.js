@@ -1,13 +1,20 @@
 (function(root){
 'use strict';
-const VERSION='1.1.1';
+const VERSION='1.2.0';
 const finite=v=>typeof v==='number'&&Number.isFinite(v);
+function normalizeHeight(input){
+ const p=input||{},value=Number(p.value),type=String(p.type||'unknown').toLowerCase();
+ const N=finite(p.geoidSeparation)?p.geoidSeparation:null;
+ if(!Number.isFinite(value)||!['ellipsoid','msl','orthometric'].includes(type))return {value:null,type:'unknown',ellipsoid:null,msl:null,geoidSeparation:N,converted:false,warning:'نوع یا مقدار ارتفاع مشخص نیست.'};
+ if(type==='ellipsoid')return {value,type,ellipsoid:value,msl:N!==null?value-N:null,geoidSeparation:N,converted:N!==null,warning:N===null?'برای تبدیل به MSL، جدایی ژئوئید معتبر لازم است.':null};
+ return {value,type,ellipsoid:N!==null?value+N:null,msl:value,geoidSeparation:N,converted:N!==null,warning:N===null?'ارتفاع MSL ثبت شد؛ برای تبدیل به بیضوی، جدایی ژئوئید معتبر لازم است.':null};
+}
 function normalizeFix(input,options){
  const p=input||{},o=options||{},lat=Number(p.lat),lon=Number(p.lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat < -90||lat > 90||lon < -180||lon > 180)return null;
  const accuracy=finite(p.accuracy)&&p.accuracy>=0?p.accuracy:null;
  if(accuracy!==null&&accuracy>(finite(o.maxAccuracy)?o.maxAccuracy:200))return null;
- return {lat,lon,alt:finite(p.alt)?p.alt:null,accuracy,speed:finite(p.speed)?p.speed:null,heading:finite(p.heading)?((p.heading%360)+360)%360:null,time:finite(p.time)?p.time:Date.now(),source:String(p.source||'GNSS').slice(0,80),fix:String(p.fix||'').toUpperCase(),sats:finite(p.sats)?p.sats:null,hdop:finite(p.hdop)?p.hdop:null,diffAge:finite(p.diffAge)?p.diffAge:null};
+ const height=normalizeHeight({value:p.alt,type:p.altitudeType||'unknown',geoidSeparation:p.geoidSeparation});\n return {lat,lon,alt:finite(p.alt)?p.alt:null,height,accuracy,speed:finite(p.speed)?p.speed:null,heading:finite(p.heading)?((p.heading%360)+360)%360:null,time:finite(p.time)?p.time:Date.now(),source:String(p.source||'GNSS').slice(0,80),fix:String(p.fix||'').toUpperCase(),sats:finite(p.sats)?p.sats:null,hdop:finite(p.hdop)?p.hdop:null,diffAge:finite(p.diffAge)?p.diffAge:null};
 }
 function checksumOK(line){
  if(typeof line!=='string'||line.charCodeAt(0)!==36)return false;
@@ -34,7 +41,7 @@ function parseNmea(line){
  const lat=nmeaCoord(f[2],f[3]),lon=nmeaCoord(f[4],f[5]),q=val(f[6]);
  if(!Number.isFinite(lat)||!Number.isFinite(lon)||q===null||q===0)return null;
  const msl=val(f[9]),geoid=val(f[11]);
- return {type,lat,lon,quality:q,sats:val(f[7]),hdop:val(f[8]),msl,geoid,ellipsoid:msl!==null&&geoid!==null?msl+geoid:msl,diffAge:val(f[13]),station:(f[14]||'').trim()};
+ return {type,lat,lon,quality:q,sats:val(f[7]),hdop:val(f[8]),msl,geoid,height:normalizeHeight({value:msl,type:'msl',geoidSeparation:geoid}),diffAge:val(f[13]),station:(f[14]||'').trim()};
 }
 function quality(f){
  if(!f)return {level:'invalid',label:'نامعتبر',usable:false};
@@ -55,5 +62,5 @@ function meanFixes(items){
  const avg=k=>a.reduce((s,x,i)=>s+x[k]*w[i],0)/sum,alts=a.filter(x=>finite(x.alt));
  return {lat:avg('lat'),lon:avg('lon'),alt:alts.length?alts.reduce((s,x)=>s+x.alt,0)/alts.length:null,count:a.length,time:Math.max(...a.map(x=>x.time)),source:'SAHROUD weighted mean',accuracy:a.every(x=>x.accuracy!==null)?Math.sqrt(1/sum):null,note:'میانگین‌گیری دقت ذاتی گیرنده را تضمین یا بهبود قطعی نمی‌دهد.'};
 }
-root.SAHROUD_GNSS=Object.freeze({version:VERSION,normalizeFix,quality,utmZone,meanFixes,checksumOK,parseNmea});
+root.SAHROUD_GNSS=Object.freeze({version:VERSION,normalizeFix,quality,utmZone,meanFixes,normalizeHeight,checksumOK,parseNmea});
 })(typeof window!=='undefined'?window:this);
