@@ -539,73 +539,11 @@ function setStatus(message,type=""){
 ================================ */
 
 function latLonToUTM(lat,lon){
-
- const a = 6378137;
- const f = 1/298.257223563;
- const e2 = f*(2-f);
- const ep2 = e2/(1-e2);
- const k0 = 0.9996;
-
- let zone = Math.floor((lon+180)/6)+1;
-
- zone = Math.max(1,Math.min(60,zone));
-
- const lonOrigin = (zone-1)*6-180+3;
-
- const phi = lat*Math.PI/180;
- const lambda = lon*Math.PI/180;
- const lambda0 = lonOrigin*Math.PI/180;
-
- const sinPhi = Math.sin(phi);
- const cosPhi = Math.cos(phi);
- const tanPhi = Math.tan(phi);
-
- const N = a/Math.sqrt(1-e2*sinPhi*sinPhi);
-
- const T = tanPhi*tanPhi;
- const C = ep2*cosPhi*cosPhi;
-
- const A = cosPhi*(lambda-lambda0);
-
- const e4 = e2*e2;
- const e6 = e4*e2;
-
- const M = a*(
- (1-e2/4-3*e4/64-5*e6/256)*phi
- -(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)
- +(15*e4/256+45*e6/1024)*Math.sin(4*phi)
- -(35*e6/3072)*Math.sin(6*phi)
- );
-
- const E = 500000+k0*N*(
- A
- +(1-T+C)*Math.pow(A,3)/6
- +(5-18*T+T*T+72*C-58*ep2)*Math.pow(A,5)/120
- );
-
- let north = k0*(
- M+N*tanPhi*(
- Math.pow(A,2)/2
- +(5-T+9*C+4*C*C)*Math.pow(A,4)/24
- +(61-58*T+T*T+600*C-330*ep2)*Math.pow(A,6)/720
- )
- );
-
- if(lat<0){
-   north+=10000000;
- }
-
- const hemisphere = lat>=0?"N":"S";
-
- return {
-   easting:E,
-   northing:north,
-   zone:zone+hemisphere,
-   formatted:
-     E.toFixed(2)+" E, "+
-     north.toFixed(2)+" N, Zone "+
-     zone+hemisphere
- };
+ const engine=window.SAHROUD_GNSS;
+ if(!engine||typeof engine.utmForward!=='function')throw new Error('هسته مرکزی تبدیل مختصات بارگذاری نشده است.');
+ const r=engine.utmForward(lat,lon);
+ if(!r.valid)throw new Error(r.warning||'تبدیل UTM ناموفق بود.');
+ return {easting:r.easting,northing:r.northing,zone:r.zone+(r.hemisphere==='N'?'N':'S'),epsg:r.epsg,formatted:r.easting.toFixed(2)+' E, '+r.northing.toFixed(2)+' N, Zone '+r.zone+(r.hemisphere==='N'?'N':'S')};
 }
 
 /* ===============================
