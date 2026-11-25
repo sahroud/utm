@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102f43">
-<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.4.11">
+<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.4.13">
 <link rel="manifest" href="./manifest.json">
 <link rel="preload" as="style" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript><title>SAHROUD RTK | برداشت هوشمند</title>
 <style>
@@ -193,7 +193,7 @@ const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,trackActive=false,trackPaused=false,trackBatch=[],selectedTrackId=null,lastTrackSampleTime=0,lastTrackPointTime=0,trackMap=null,trackLine=null,trackMarkers=null,selectedMap=null,selectedMapLayers=null,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,serialGst=null,orientation=null;
 let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
-const APP_VERSION='2.4.12';
+const APP_VERSION='2.4.13';
 const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',serialBaud:9600,vibrate:true,sound:false,trackMode:'time',trackIntervalSec:1,trackDistanceM:2};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{}),avgSeconds:3};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}if(!Array.isArray(db.tracks))db.tracks=[];const pending=db.tracks.find(t=>t.status==='recording');if(pending){pending.status='paused';selectedTrackId=pending.id;}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
