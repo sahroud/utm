@@ -107,7 +107,7 @@ function utmForward(lat,lon,forcedZone){
  let north=k0*(M+N*t*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));
  const hemisphere=lat<0?'S':'N';if(hemisphere==='S')north+=10000000;
  const crs=normalizeCRS({type:'UTM',zone,hemisphere});
- return {valid:true,easting:E,northing:north,zone,hemisphere,epsg:crs.epsg,crs,convergenceWarning:forcedZone!=null&&zone!==utmZone(lon)?'زون اجباری با زون طبیعی طول جغرافیایی متفاوت است؛ اعوجاج ممکن است افزایش یابد.':null};
+ return {valid:true,easting:E,northing:north,zone,hemisphere,epsg:crs.epsg,crs,convergenceWarning:forcedZone!=null&&zone!==utmZone(lon,lat)?'زون اجباری با زون طبیعی طول جغرافیایی متفاوت است؛ اعوجاج ممکن است افزایش یابد.':null};
 }
 function utmInverse(easting,northing,zone,hemisphere){
  const E=Number(easting),Nn=Number(northing),z=Number(zone),h=String(hemisphere||'N').toUpperCase();
