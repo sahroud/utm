@@ -1,6 +1,6 @@
 (function(root){
 'use strict';
-const VERSION='1.4.0';
+const VERSION='1.4.1';
 const finite=v=>typeof v==='number'&&Number.isFinite(v);
 function normalizeHeight(input){
  const p=input||{},value=Number(p.value),type=String(p.type||'unknown').toLowerCase();
