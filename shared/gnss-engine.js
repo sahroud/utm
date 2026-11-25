@@ -96,7 +96,7 @@ function utmZone(lon,lat){
 function utmForward(lat,lon,forcedZone){
  lat=Number(lat);lon=Number(lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat < -80||lat > 84||lon < -180||lon > 180)return {valid:false,warning:'UTM استاندارد فقط در عرض جغرافیایی ۸۰- تا ۸۴+ درجه معتبر است.'};
- const zone=forcedZone==null?utmZone(lon):Number(forcedZone);
+ const zone=forcedZone==null?utmZone(lon,lat):Number(forcedZone);
  if(!Number.isInteger(zone)||zone<1||zone>60)return {valid:false,warning:'زون UTM باید عدد صحیح بین ۱ تا ۶۰ باشد.'};
  const a=6378137,f=1/298.257223563,e2=f*(2-f),ep2=e2/(1-e2),k0=.9996;
  const phi=lat*Math.PI/180,lam=lon*Math.PI/180,lam0=((zone-1)*6-180+3)*Math.PI/180;
