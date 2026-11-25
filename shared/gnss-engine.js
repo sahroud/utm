@@ -14,7 +14,8 @@ function normalizeFix(input,options){
  if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat < -90||lat > 90||lon < -180||lon > 180)return null;
  const accuracy=finite(p.accuracy)&&p.accuracy>=0?p.accuracy:null;
  if(accuracy!==null&&accuracy>(finite(o.maxAccuracy)?o.maxAccuracy:200))return null;
- const height=normalizeHeight({value:p.alt,type:p.altitudeType||'unknown',geoidSeparation:p.geoidSeparation});\n return {lat,lon,alt:finite(p.alt)?p.alt:null,height,accuracy,speed:finite(p.speed)?p.speed:null,heading:finite(p.heading)?((p.heading%360)+360)%360:null,time:finite(p.time)?p.time:Date.now(),source:String(p.source||'GNSS').slice(0,80),fix:String(p.fix||'').toUpperCase(),sats:finite(p.sats)?p.sats:null,hdop:finite(p.hdop)?p.hdop:null,diffAge:finite(p.diffAge)?p.diffAge:null};
+ const height=normalizeHeight({value:p.alt,type:p.altitudeType||'unknown',geoidSeparation:p.geoidSeparation});
+ return {lat,lon,alt:finite(p.alt)?p.alt:null,height,accuracy,speed:finite(p.speed)?p.speed:null,heading:finite(p.heading)?((p.heading%360)+360)%360:null,time:finite(p.time)?p.time:Date.now(),source:String(p.source||'GNSS').slice(0,80),fix:String(p.fix||'').toUpperCase(),sats:finite(p.sats)?p.sats:null,hdop:finite(p.hdop)?p.hdop:null,diffAge:finite(p.diffAge)?p.diffAge:null};
 }
 function checksumOK(line){
  if(typeof line!=='string'||line.charCodeAt(0)!==36)return false;
