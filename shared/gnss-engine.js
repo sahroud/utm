@@ -1,6 +1,6 @@
 (function(root){
 'use strict';
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const finite=v=>typeof v==='number'&&Number.isFinite(v);
 function normalizeHeight(input){
  const p=input||{},value=Number(p.value),type=String(p.type||'unknown').toLowerCase();
@@ -56,6 +56,32 @@ function quality(f){
  if(f.accuracy<=5)return {level:'medium',label:'دقت اعلامی متوسط',usable:true};
  return {level:'low',label:'دقت اعلامی پایین',usable:true};
 }
+function normalizeCRS(input){
+ const p=input||{},type=String(p.type||'WGS84').toUpperCase(),datum=String(p.datum||'WGS84').toUpperCase();
+ if(type==='WGS84'||type==='GEOGRAPHIC'){
+  if(datum!=='WGS84')return {valid:false,type:'WGS84',datum,epsg:null,warning:'این نسخه فقط Datum جغرافیایی WGS84 را تأیید می‌کند.'};
+  return {valid:true,type:'WGS84',datum:'WGS84',epsg:4326,zone:null,hemisphere:null,units:'degree'};
+ }
+ if(type==='UTM'){
+  const zone=Number(p.zone),hemisphere=String(p.hemisphere||'N').toUpperCase();
+  if(datum!=='WGS84'||!Number.isInteger(zone)||zone<1||zone>60||!['N','S'].includes(hemisphere))return {valid:false,type:'UTM',datum,epsg:null,zone:Number.isInteger(zone)?zone:null,hemisphere,warning:'UTM نیازمند Datum WGS84، زون صحیح ۱ تا ۶۰ و نیم‌کره N یا S است.'};
+  return {valid:true,type:'UTM',datum:'WGS84',epsg:(hemisphere==='N'?32600:32700)+zone,zone,hemisphere,units:'metre'};
+ }
+ return {valid:false,type,datum,epsg:null,warning:'سیستم مختصات پشتیبانی یا شناسایی نشد؛ تبدیل خودکار انجام نشد.'};
+}
+function validateCoordinate(point,crs){
+ const p=point||{},c=normalizeCRS(crs);
+ if(!c.valid)return {valid:false,crs:c,warning:c.warning};
+ const x=Number(p.x),y=Number(p.y);
+ if(!Number.isFinite(x)||!Number.isFinite(y))return {valid:false,crs:c,warning:'مختصات باید عددی باشند.'};
+ if(c.type==='WGS84'&&(x < -180||x > 180||y < -90||y > 90))return {valid:false,crs:c,warning:'طول یا عرض جغرافیایی خارج از محدوده WGS84 است.'};
+ if(c.type==='UTM'&&(x<100000||x>900000||y<0||y>10000000))return {valid:false,crs:c,warning:'Easting یا Northing خارج از محدوده متعارف UTM است.'};
+ return {valid:true,crs:c,x,y,warning:null};
+}
+function sameCRS(a,b){
+ const x=normalizeCRS(a),y=normalizeCRS(b);
+ return x.valid&&y.valid&&x.epsg===y.epsg;
+}
 function utmZone(lon){if(!finite(lon)||lon < -180||lon > 180)return null;return Math.min(60,Math.max(1,Math.floor((lon+180)/6)+1));}
 function meanFixes(items){
  const a=(Array.isArray(items)?items:[]).map(x=>normalizeFix(x)).filter(Boolean);if(!a.length)return null;
@@ -63,5 +89,5 @@ function meanFixes(items){
  const avg=k=>a.reduce((s,x,i)=>s+x[k]*w[i],0)/sum,alts=a.filter(x=>finite(x.alt));
  return {lat:avg('lat'),lon:avg('lon'),alt:alts.length?alts.reduce((s,x)=>s+x.alt,0)/alts.length:null,count:a.length,time:Math.max(...a.map(x=>x.time)),source:'SAHROUD weighted mean',accuracy:a.every(x=>x.accuracy!==null)?Math.sqrt(1/sum):null,note:'میانگین‌گیری دقت ذاتی گیرنده را تضمین یا بهبود قطعی نمی‌دهد.'};
 }
-root.SAHROUD_GNSS=Object.freeze({version:VERSION,normalizeFix,quality,utmZone,meanFixes,normalizeHeight,checksumOK,parseNmea});
+root.SAHROUD_GNSS=Object.freeze({version:VERSION,normalizeFix,quality,utmZone,meanFixes,normalizeHeight,normalizeCRS,validateCoordinate,sameCRS,checksumOK,parseNmea});
 })(typeof window!=='undefined'?window:this);
