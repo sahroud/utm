@@ -1,6 +1,6 @@
 (function(root){
 'use strict';
-const VERSION='1.4.1';
+const VERSION='1.5.0';
 const finite=v=>typeof v==='number'&&Number.isFinite(v);
 function normalizeHeight(input){
  const p=input||{},value=Number(p.value),type=String(p.type||'unknown').toLowerCase();
@@ -123,11 +123,30 @@ function utmInverse(easting,northing,zone,hemisphere){
  if(latitude < -80.0001||latitude > 84.0001||longitude < -180.0001||longitude > 180.0001)return {valid:false,warning:'مختصات تبدیل‌شده خارج از محدوده UTM است.'};
  return {valid:true,lat:latitude,lon:longitude,zone:z,hemisphere:h,epsg:normalizeCRS({type:'UTM',zone:z,hemisphere:h}).epsg};
 }
+function geodesicDistance(a,b){
+ const lat1=Number(a&&a.lat),lon1=Number(a&&a.lon),lat2=Number(b&&b.lat),lon2=Number(b&&b.lon);
+ if(!Number.isFinite(lat1)||!Number.isFinite(lon1)||!Number.isFinite(lat2)||!Number.isFinite(lon2)||Math.abs(lat1)>90||Math.abs(lat2)>90||Math.abs(lon1)>180||Math.abs(lon2)>180)return null;
+ const rad=Math.PI/180,dLat=(lat2-lat1)*rad;
+ let dLon=(lon2-lon1)*rad;dLon=((dLon+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+ const h=Math.sin(dLat/2)**2+Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLon/2)**2;
+ return 6371008.8*2*Math.atan2(Math.sqrt(Math.min(1,h)),Math.sqrt(Math.max(0,1-h)));
+}
+function analyzeTrack(points){
+ const pts=(Array.isArray(points)?points:[]).filter(p=>p&&Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lon))&&Math.abs(Number(p.lat))<=90&&Math.abs(Number(p.lon))<=180);
+ if(pts.length<2)return {valid:false,count:pts.length,lengthMetres:0,zones:[],crossesZone:false,warning:'برای تحلیل مسیر حداقل دو نقطه معتبر لازم است.'};
+ const zones=[],transitions=[];let length=0;
+ for(let i=0;i<pts.length;i++){
+  const p=pts[i],z=utmZone(Number(p.lon),Number(p.lat)),hem=Number(p.lat)<0?'S':'N',key=z+hem;
+  if(!zones.includes(key))zones.push(key);
+  if(i>0){const d=geodesicDistance(pts[i-1],p);if(d!==null)length+=d;const prev=pts[i-1],prevKey=utmZone(Number(prev.lon),Number(prev.lat))+(Number(prev.lat)<0?'S':'N');if(prevKey!==key)transitions.push({pointIndex:i,from:prevKey,to:key});}
+ }
+ return {valid:true,count:pts.length,lengthMetres:length,zones,crossesZone:zones.length>1,transitions,method:'WGS84 coordinates with spherical haversine distance',warning:zones.length>1?'مسیر از بیش از یک زون UTM عبور می‌کند؛ طول مسیر از مختصات جغرافیایی محاسبه شده است. برای خروجی UTM یک زون مشترک انتخاب کنید یا نقاط را جداگانه با EPSG هر زون صادر کنید.':null};
+}
 function meanFixes(items){
  const a=(Array.isArray(items)?items:[]).map(x=>normalizeFix(x)).filter(Boolean);if(!a.length)return null;
  const w=a.map(x=>x.accuracy&&x.accuracy>0?1/(x.accuracy*x.accuracy):1),sum=w.reduce((x,y)=>x+y,0);
  const avg=k=>a.reduce((s,x,i)=>s+x[k]*w[i],0)/sum,alts=a.filter(x=>finite(x.alt));
  return {lat:avg('lat'),lon:avg('lon'),alt:alts.length?alts.reduce((s,x)=>s+x.alt,0)/alts.length:null,count:a.length,time:Math.max(...a.map(x=>x.time)),source:'SAHROUD weighted mean',accuracy:a.every(x=>x.accuracy!==null)?Math.sqrt(1/sum):null,note:'میانگین‌گیری دقت ذاتی گیرنده را تضمین یا بهبود قطعی نمی‌دهد.'};
 }
-root.SAHROUD_GNSS=Object.freeze({version:VERSION,normalizeFix,quality,utmZone,meanFixes,normalizeHeight,normalizeCRS,validateCoordinate,sameCRS,utmForward,utmInverse,checksumOK,parseNmea});
+root.SAHROUD_GNSS=Object.freeze({version:VERSION,normalizeFix,quality,utmZone,meanFixes,normalizeHeight,normalizeCRS,validateCoordinate,sameCRS,utmForward,utmInverse,geodesicDistance,analyzeTrack,checksumOK,parseNmea});
 })(typeof window!=='undefined'?window:this);
