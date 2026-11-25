@@ -193,7 +193,7 @@ const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,trackActive=false,trackPaused=false,trackBatch=[],selectedTrackId=null,lastTrackSampleTime=0,lastTrackPointTime=0,trackMap=null,trackLine=null,trackMarkers=null,selectedMap=null,selectedMapLayers=null,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,serialGst=null,orientation=null;
 let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
-const APP_VERSION='2.4.11';
+const APP_VERSION='2.4.12';
 const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',serialBaud:9600,vibrate:true,sound:false,trackMode:'time',trackIntervalSec:1,trackDistanceM:2};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{}),avgSeconds:3};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}if(!Array.isArray(db.tracks))db.tracks=[];const pending=db.tracks.find(t=>t.status==='recording');if(pending){pending.status='paused';selectedTrackId=pending.id;}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
@@ -352,33 +352,39 @@ function drawTrackCharts(){
 }
 
 function drawLongitudinalAnalysis(){
- const t=currentTrack(),pts=t?.points||[],recordedSegments=trackSegments(t),summary=$('trackGradeSummary'),info=$('trackGradeInfo'),table=$('trackBreakTable'),thresholdEl=$('trackBreakThreshold');
+ const t=currentTrack(),pts=t?.points||[],recorded=trackSegments(t),summary=$('trackGradeSummary'),info=$('trackGradeInfo'),table=$('trackBreakTable'),thresholdEl=$('trackBreakThreshold');
  if(!summary||!info||!table)return;
- let cumulative=Array(pts.length).fill(0),distanceOffset=0;recordedSegments.forEach(seg=>{for(let i=seg.from;i<seg.to;i++){if(i>seg.from)distanceOffset+=distance(pts[i-1],pts[i]);cumulative[i]=distanceOffset;}});
- const valid=[];pts.forEach((p,i)=>{const z=Number(p.alt);if(p.alt!==null&&p.alt!==''&&Number.isFinite(z))valid.push({i,z});});
- if(valid.length<2){
-  summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع ابتدا تا انتها</small><strong>—</strong></div><div class="stat"><small>طول افقی مسیر</small><strong>—</strong></div><div class="stat"><small>شیب متوسط</small><strong>—</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong>۰</strong></div>';
-  info.textContent='برای محاسبه شیب طولی حداقل دو نقطه با ارتفاع عددی معتبر لازم است.';
-  table.innerHTML='<div class="hint">داده ارتفاعی کافی نیست.</div>';return;
- }
- const first=valid[0],last=valid[valid.length-1],run=Math.max(0,cumulative[last.i]-cumulative[first.i]),rise=last.z-first.z,avg=run>0?rise/run*100:NaN;
  const fmt=x=>Number.isFinite(x)?(x>0?'+':'')+x.toFixed(2):'—';
- summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع ابتدا تا انتها</small><strong>'+fmt(rise)+' m</strong></div><div class="stat"><small>طول افقی مسیر</small><strong>'+run.toFixed(1)+' m</strong></div><div class="stat"><small>شیب متوسط</small><strong>'+fmt(avg)+' %</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong id="trackBreakCount">۰</strong></div>';
- const segments=[];
- recordedSegments.forEach(part=>{for(let i=part.from+1;i<part.to;i++){
-  const a=Number(pts[i-1].alt),b=Number(pts[i].alt),d=distance(pts[i-1],pts[i]);
-  if(pts[i-1].alt===null||pts[i-1].alt===''||pts[i].alt===null||pts[i].alt===''||!Number.isFinite(a)||!Number.isFinite(b)||!Number.isFinite(d)||d<0.5)continue;
-  segments.push({from:i,to:i+1,grade:(b-a)/d*100,dist:cumulative[i]});
- }});
+ let cumulative=0,totalRun=0,totalRise=0,validPairs=0,missingPairs=0;const grades=[],validHeights=[];
+ recorded.forEach(part=>{
+  for(let i=part.from;i<part.to;i++){
+   const p=pts[i],z=p.alt!==null&&p.alt!==''?Number(p.alt):NaN;
+   if(Number.isFinite(z))validHeights.push({i,z,segment:part.index});
+   if(i===part.from)continue;
+   const prev=pts[i-1],a=prev.alt!==null&&prev.alt!==''?Number(prev.alt):NaN,b=z,d=distance(prev,p);
+   if(!Number.isFinite(a)||!Number.isFinite(b)||!Number.isFinite(d)||d<0.5){missingPairs++;continue;}
+   const rise=b-a,grade=rise/d*100;totalRun+=d;totalRise+=rise;validPairs++;
+   grades.push({from:i-1,to:i,segment:part.index,grade,dist:cumulative+d});
+   cumulative+=d;
+  }
+ });
+ if(validPairs===0){
+  summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع تجمعی</small><strong>—</strong></div><div class="stat"><small>طول افقی معتبر</small><strong>—</strong></div><div class="stat"><small>شیب متوسط قطعات</small><strong>—</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong>۰</strong></div>';
+  info.textContent='برای محاسبه شیب، حداقل یک جفت نقطه متوالی با ارتفاع معتبر در یک قطعه برداشت لازم است.';
+  table.innerHTML='<div class="hint">داده ارتفاعی پیوسته کافی نیست؛ بین قطعات ادغام‌شده یا نقاط فاقد ارتفاع، شیب فرضی محاسبه نمی‌شود.</div>';return;
+ }
+ const avg=totalRun>0?totalRise/totalRun*100:NaN;
+ summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع تجمعی قطعات</small><strong>'+fmt(totalRise)+' m</strong></div><div class="stat"><small>طول افقی معتبر</small><strong>'+totalRun.toFixed(1)+' m</strong></div><div class="stat"><small>شیب متوسط وزنی</small><strong>'+fmt(avg)+' %</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong id="trackBreakCount">۰</strong></div>';
  const threshold=Number(thresholdEl?.value||2),breaks=[];
- if(Number.isFinite(threshold)&&threshold>0)for(let i=1;i<segments.length;i++){
-  const prev=segments[i-1],cur=segments[i],delta=cur.grade-prev.grade;
-  if(cur.from===prev.to&&Math.abs(delta)>=threshold)breaks.push({point:cur.from,dist:cumulative[cur.from-1],before:prev.grade,after:cur.grade,delta});
+ if(Number.isFinite(threshold)&&threshold>0)for(let i=1;i<grades.length;i++){
+  const prev=grades[i-1],cur=grades[i],delta=cur.grade-prev.grade;
+  if(cur.segment===prev.segment&&cur.from===prev.to&&Math.abs(delta)>=threshold)breaks.push({point:cur.to+1,dist:cur.dist,before:prev.grade,after:cur.grade,delta});
  }
  const count=$('trackBreakCount');if(count)count.textContent=String(breaks.length);
- info.textContent='قطعات قابل محاسبه: '+segments.length+' از '+Math.max(0,pts.length-1)+' | ارتفاع ابتدا: '+first.z.toFixed(2)+' m (نقطه '+(first.i+1)+') | ارتفاع انتها: '+last.z.toFixed(2)+' m (نقطه '+(last.i+1)+') | مقادیر ارتفاع GPS/گیرنده ممکن است دارای خطای سیستماتیک باشند.';
- if(!breaks.length){table.innerHTML='<div class="hint">با آستانه '+(Number.isFinite(threshold)?threshold.toFixed(1):'—')+'٪ شکست شیب پیوسته‌ای شناسایی نشد. قطعات فاقد ارتفاع یا با فاصله کمتر از ۰٫۵ متر در محاسبه شیب حذف شده‌اند.</div>';return;}
- table.innerHTML='<table><thead><tr><th>نقطه شکست</th><th>فاصله از ابتدا (m)</th><th>شیب قبل (%)</th><th>شیب بعد (%)</th><th>تغییر شیب (%)</th></tr></thead><tbody>'+breaks.slice(0,30).map(b=>'<tr><td>'+b.point+'</td><td>'+b.dist.toFixed(1)+'</td><td>'+fmt(b.before)+'</td><td>'+fmt(b.after)+'</td><td>'+fmt(b.delta)+'</td></tr>').join('')+'</tbody></table>'+(breaks.length>30?'<div class="hint">۳۰ مورد از '+breaks.length+' شکست نمایش داده شده است.</div>':'');
+ const first=validHeights[0],last=validHeights[validHeights.length-1];
+ info.textContent='جفت نقاط قابل محاسبه: '+validPairs+' | جفت حذف‌شده به‌علت ارتفاع نامعتبر/فاصله کوتاه: '+missingPairs+' | ارتفاع‌ها از داده GPS/گیرنده‌اند و بدون مرجع ژئوئید یا کنترل ترازیابی، ارتفاع مبنای نقشه‌برداری قطعی نیستند.';
+ if(!breaks.length){table.innerHTML='<div class="hint">با آستانه '+threshold.toFixed(1)+'٪ شکست شیب پیوسته‌ای شناسایی نشد. مقایسه شیب فقط درون هر قطعه برداشت انجام شده است.</div>';return;}
+ table.innerHTML='<table><thead><tr><th>نقطه شکست</th><th>فاصله تجمعی قطعات (m)</th><th>شیب قبل (%)</th><th>شیب بعد (%)</th><th>تغییر شیب (%)</th></tr></thead><tbody>'+breaks.slice(0,30).map(b=>'<tr><td>'+b.point+'</td><td>'+b.dist.toFixed(1)+'</td><td>'+fmt(b.before)+'</td><td>'+fmt(b.after)+'</td><td>'+fmt(b.delta)+'</td></tr>').join('')+'</tbody></table>'+(breaks.length>30?'<div class="hint">۳۰ مورد از '+breaks.length+' شکست نمایش داده شده است.</div>':'');
 }
 
 function deleteTrackRange(){
