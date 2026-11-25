@@ -82,7 +82,17 @@ function sameCRS(a,b){
  const x=normalizeCRS(a),y=normalizeCRS(b);
  return x.valid&&y.valid&&x.epsg===y.epsg;
 }
-function utmZone(lon){if(!finite(lon)||lon < -180||lon > 180)return null;return Math.min(60,Math.max(1,Math.floor((lon+180)/6)+1));}
+function utmZone(lon,lat){
+ if(!finite(lon)||lon < -180||lon > 180)return null;
+ if(finite(lat)&&lat>=56&&lat<64&&lon>=3&&lon<12)return 32;
+ if(finite(lat)&&lat>=72&&lat<=84){
+  if(lon>=0&&lon<9)return 31;
+  if(lon>=9&&lon<21)return 33;
+  if(lon>=21&&lon<33)return 35;
+  if(lon>=33&&lon<42)return 37;
+ }
+ return Math.min(60,Math.max(1,Math.floor((lon+180)/6)+1));
+}
 function utmForward(lat,lon,forcedZone){
  lat=Number(lat);lon=Number(lon);
  if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat < -80||lat > 84||lon < -180||lon > 180)return {valid:false,warning:'UTM استاندارد فقط در عرض جغرافیایی ۸۰- تا ۸۴+ درجه معتبر است.'};
