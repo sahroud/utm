@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102f43">
-<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.3.3">
+<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.3.6">
 <link rel="manifest" href="./manifest.json">
 <link rel="preload" as="style" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript><title>SAHROUD RTK | برداشت هوشمند</title>
 <style>
@@ -31,7 +31,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 .auto-capture-toast{position:fixed;z-index:9999;left:50%;top:18%;transform:translateX(-50%);background:#126b45;color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 5px 22px #0004;font-weight:bold;text-align:center;pointer-events:none;animation:autoToast 1s ease both}@keyframes autoToast{0%{opacity:0;transform:translate(-50%,-8px)}12%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}</style>
 <style>#selectedMap{height:430px;width:100%;border:1px solid var(--line);border-radius:10px;z-index:1;background:#eaf0f2}.map-coord{font:12px Tahoma;direction:ltr;text-align:left;line-height:1.7}.track-box{background:#f4f8fa;border:1px solid var(--line);padding:10px;border-radius:10px;margin-top:10px}</style><script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script></head>
 <body>
-<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill" id="versionPill">نسخه 2.3.3</span><div class="pill" id="connectionPill">در انتظار GPS</div></div></div></header>
+<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill" id="versionPill">نسخه 2.3.6</span><div class="pill" id="connectionPill">در انتظار GPS</div></div></div></header>
 <main>
 <nav class="tabs">
 <button class="tab active" data-tab="survey">برداشت</button><button class="tab" data-tab="points">نقاط</button><button class="tab" data-tab="selected">نقاط انتخاب‌شده</button><button class="tab" data-tab="calc">محاسبات</button><button class="tab" data-tab="settings">تنظیمات</button>
@@ -137,6 +137,25 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 <div class="stats"><div class="stat"><small>فاصله تا هدف</small><strong id="targetDistance">—</strong></div><div class="stat"><small>آزیموت تا هدف</small><strong id="targetAz">—</strong></div></div>
 <div id="targetStatus" class="status">برای راهنمایی به نقطه هدف، GPS را روشن کنید و یک نقطه هدف انتخاب کنید.</div>
 </div>
+
+<div class="card" id="earthworkCard">
+<h2>برآورد حجم خاک‌برداری و خاک‌ریزی مسیر</h2>
+<div class="hint">روش محاسبه: میانگین مساحت دو مقطع متوالی (Average End Area). در هر ایستگاه، مساحت واقعی خاک‌برداری و خاک‌ریزی را از برداشت مقطع عرضی یا نرم‌افزار سطح زمین وارد کنید. ارتفاع خط مسیر به‌تنهایی برای تعیین این مساحت‌ها کافی نیست.</div>
+<div class="row">
+<label style="flex:1">ایستگاه / فاصله از مبدأ (m)<input id="ewStation" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+<label style="flex:1">مساحت خاک‌برداری (m²)<input id="ewCut" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+<label style="flex:1">مساحت خاک‌ریزی (m²)<input id="ewFill" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label>
+</div>
+<div class="row"><button id="ewAdd" class="green">ثبت مقطع</button><button id="ewExport" class="gray">خروجی CSV مقاطع و حجم</button><button id="ewClear" class="red">پاک‌کردن جدول</button></div>
+<div class="stats" style="margin-top:10px">
+<div class="stat"><small>حجم کل خاک‌برداری</small><strong id="ewTotalCut">—</strong></div>
+<div class="stat"><small>حجم کل خاک‌ریزی</small><strong id="ewTotalFill">—</strong></div>
+<div class="stat"><small>تعداد مقاطع ثبت‌شده</small><strong id="ewCount">۰</strong></div>
+</div>
+<div id="ewTable" style="overflow:auto;margin-top:8px"><div class="hint">برای شروع، مساحت مقطع‌ها را در ایستگاه‌های متوالی ثبت کنید.</div></div>
+<div id="ewMessage" class="hint" style="margin-top:8px">حداقل دو مقطع با ایستگاه‌های متفاوت برای محاسبه حجم لازم است. داده‌ها روی همین دستگاه ذخیره می‌شوند.</div>
+<div class="hint">فرض محاسبه: تغییر مساحت بین دو مقطع به‌صورت خطی در نظر گرفته می‌شود. اگر مسیر دارای قوس، تغییر ناگهانی زمین، آبراهه یا شکست هندسی است، فاصله مقاطع را کاهش دهید و مقاطع اضافی برداشت کنید. این خروجی برآورد اولیه است و جایگزین کنترل نقشه‌بردار و طراحی اجرایی نیست.</div>
+</div>
 </section>
 <section id="settings" class="panel">
 <div class="card">
@@ -173,7 +192,7 @@ const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,trackActive=false,trackPaused=false,trackBatch=[],selectedTrackId=null,lastTrackSampleTime=0,lastTrackPointTime=0,trackMap=null,trackLine=null,trackMarkers=null,selectedMap=null,selectedMapLayers=null,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,serialGst=null,orientation=null;
 let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
-const APP_VERSION='2.3.5';
+const APP_VERSION='2.3.6';
 const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',serialBaud:9600,vibrate:true,sound:false,trackMode:'time',trackIntervalSec:1,trackDistanceM:2};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{}),avgSeconds:3};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}if(!Array.isArray(db.tracks))db.tracks=[];const pending=db.tracks.find(t=>t.status==='recording');if(pending){pending.status='paused';selectedTrackId=pending.id;}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
@@ -642,6 +661,53 @@ function drawSelectedPlot(){
 function setPointSelection(ids){db.selectedPointIds=[...new Set(ids)].filter(id=>db.points.some(p=>p.id===id));persist();renderPoints();renderSelects();}
 function exportSelectedCsv(){const pts=(db.selectedPointIds||[]).map(id=>db.points.find(p=>p.id===id)).filter(Boolean);if(!pts.length){alert('ابتدا نقاط موردنظر را انتخاب کنید.');return;}download('sahroud-selected-points.csv','\ufeff'+csv([['Name','Latitude','Longitude','Altitude','Accuracy','Samples','Time'],...pts.map(p=>[p.name,p.lat,p.lon,p.alt,p.accuracy,p.samples||1,p.time])]),'text/csv;charset=utf-8');}
 function exportSelectedGeo(){const pts=(db.selectedPointIds||[]).map(id=>db.points.find(p=>p.id===id)).filter(Boolean);if(!pts.length){alert('ابتدا نقاط موردنظر را انتخاب کنید.');return;}download('sahroud-selected-points.geojson',JSON.stringify({type:'FeatureCollection',features:pts.map(p=>({type:'Feature',properties:{name:p.name,accuracy:p.accuracy,time:p.time},geometry:{type:'Point',coordinates:[p.lon,p.lat,p.alt]}}))},null,2),'application/geo+json');}
+
+const EW_KEY='sahroud_rtk_earthwork_v1';
+let ewSections=[];
+function ewLoad(){try{const v=JSON.parse(localStorage.getItem(EW_KEY)||'[]');ewSections=Array.isArray(v)?v.filter(x=>Number.isFinite(Number(x.station))&&Number.isFinite(Number(x.cut))&&Number.isFinite(Number(x.fill))):[];}catch(e){ewSections=[];}}
+function ewSave(){try{localStorage.setItem(EW_KEY,JSON.stringify(ewSections));}catch(e){$('ewMessage').textContent='ذخیره‌سازی مرورگر در دسترس نیست؛ از خروجی CSV پشتیبان بگیرید.';}}
+function ewCalc(){
+ const rows=ewSections.slice().sort((a,b)=>a.station-b.station);
+ let cut=0,fill=0,parts=[];
+ for(let i=1;i<rows.length;i++){
+  const p=rows[i-1],q=rows[i],L=q.station-p.station;
+  if(!(L>0))continue;
+  const vc=(p.cut+q.cut)*0.5*L,vf=(p.fill+q.fill)*0.5*L;
+  cut+=vc;fill+=vf;parts.push({from:p.station,to:q.station,length:L,cutArea1:p.cut,cutArea2:q.cut,fillArea1:p.fill,fillArea2:q.fill,cutVolume:vc,fillVolume:vf});
+ }
+ return {rows,parts,cut,fill};
+}
+function ewRender(){
+ const r=ewCalc();
+ $('ewCount').textContent=String(r.rows.length);
+ $('ewTotalCut').textContent=r.rows.length>1?num(r.cut,2)+' m³':'—';
+ $('ewTotalFill').textContent=r.rows.length>1?num(r.fill,2)+' m³':'—';
+ if(!r.rows.length){$('ewTable').innerHTML='<div class="hint">هنوز مقطعی ثبت نشده است.</div>';}
+ else{
+  const sectionRows=r.rows.map((p,i)=>'<tr><td>'+ (i+1) +'</td><td>'+num(p.station,2)+'</td><td>'+num(p.cut,2)+'</td><td>'+num(p.fill,2)+'</td><td><button class="red" data-ew-del="'+i+'">حذف</button></td></tr>').join('');
+  const volumeRows=r.parts.map(p=>'<tr><td>'+num(p.from,2)+' تا '+num(p.to,2)+'</td><td>'+num(p.length,2)+'</td><td>'+num(p.cutVolume,2)+'</td><td>'+num(p.fillVolume,2)+'</td></tr>').join('');
+  $('ewTable').innerHTML='<h3>مقاطع ثبت‌شده</h3><table><thead><tr><th>ردیف</th><th>ایستگاه (m)</th><th>مساحت برش (m²)</th><th>مساحت خاکریز (m²)</th><th>عملیات</th></tr></thead><tbody>'+sectionRows+'</tbody></table>'+(r.parts.length?'<h3 style="margin-top:10px">حجم بین مقاطع</h3><table><thead><tr><th>بازه</th><th>طول (m)</th><th>خاک‌برداری (m³)</th><th>خاک‌ریزی (m³)</th></tr></thead><tbody>'+volumeRows+'</tbody></table>':'');
+ }
+ $('ewMessage').textContent=r.rows.length<2?'برای محاسبه حجم، حداقل دو مقطع با ایستگاه متفاوت ثبت کنید.':('محاسبه بر اساس '+r.parts.length+' بازه انجام شد؛ مقاطع به ترتیب ایستگاه مرتب شده‌اند.');
+}
+function ewAdd(){
+ const station=Number($('ewStation').value),cut=Number($('ewCut').value),fill=Number($('ewFill').value);
+ if(!Number.isFinite(station)||station<0||!Number.isFinite(cut)||cut<0||!Number.isFinite(fill)||fill<0){alert('ایستگاه و مساحت‌ها باید عدد معتبر و غیرمنفی باشند.');return;}
+ if(ewSections.some(x=>Math.abs(x.station-station)<1e-8)){alert('برای این ایستگاه قبلاً مقطع ثبت شده است.');return;}
+ ewSections.push({station,cut,fill,created:new Date().toISOString()});ewSections.sort((a,b)=>a.station-b.station);ewSave();ewRender();
+ const next=station+10;$('ewStation').value=next.toFixed(2);$('ewCut').value='0';$('ewFill').value='0';
+}
+function ewExport(){
+ if(!ewSections.length){alert('ابتدا مقطع ثبت کنید.');return;}
+ const r=ewCalc(),rows=[['Station_m','CutArea_m2','FillArea_m2','IntervalFrom_m','IntervalTo_m','IntervalLength_m','CutVolume_m3','FillVolume_m3']];
+ if(!r.parts.length)r.rows.forEach(p=>rows.push([p.station,p.cut,p.fill,'','','','','']));
+ else r.parts.forEach(p=>rows.push(['', '', '',p.from,p.to,p.length,p.cutVolume,p.fillVolume]));
+ download('sahroud-earthwork-estimate.csv','\\ufeff'+csv(rows),'text/csv;charset=utf-8');
+}
+$('ewAdd').onclick=ewAdd;$('ewExport').onclick=ewExport;
+$('ewClear').onclick=()=>{if(!ewSections.length||!confirm('تمام مقاطع و محاسبات این دستگاه پاک شوند؟'))return;ewSections=[];ewSave();ewRender();};
+$('ewTable').onclick=e=>{const b=e.target.closest('button[data-ew-del]');if(!b)return;const i=Number(b.dataset.ewDel),r=ewCalc();if(!Number.isInteger(i)||i<0||i>=r.rows.length)return;const target=r.rows[i];ewSections=ewSections.filter(x=>x.station!==target.station);ewSave();ewRender();};
+ewLoad();ewRender();
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===b.dataset.tab));if(b.dataset.tab==='calc')targetUpdate();if(b.dataset.tab==='points')drawPlot();if(b.dataset.tab==='selected'){drawSelectedPlot();setTimeout(()=>selectedMap&&selectedMap.invalidateSize(),150);}}));
 window.addEventListener('resize',()=>{if(document.querySelector('[data-tab="points"].active'))drawPlot();if(document.querySelector('[data-tab="selected"].active')&&selectedMap)selectedMap.invalidateSize();});
 $('startBtn').onclick=startGps;$('stopBtn').onclick=stopGps;$('saveBtn').onclick=manualCapture;$('cancelTriplet').onclick=cancelTriplet;$('mapBtn').onclick=()=>{if(!latest)return;let u='https://www.openstreetmap.org/?mlat='+latest.lat+'&mlon='+latest.lon+'#map=18/'+latest.lat+'/'+latest.lon;window.open(u,'_blank','noopener');};$('autoBtn').onclick=()=>{unlockAudio();auto=!auto;manualBatch=[];autoBatch=[];lastAutoSampleTime=0;lastManualSampleTime=0;stableSince=0;lastAutoSave=auto?0:Date.now();$('autoBtn').textContent='خودکار هر ۱ ثانیه: '+(auto?'روشن':'خاموش');$('autoBtn').className=auto?'green':'orange';updateTripletUI();render();};$('avgBtn').onclick=()=>{samples=[];stableSince=0;render();};$('clearSamples').onclick=()=>{samples=[];stableSince=0;render();status('نمونه‌های موقت پاک شدند.');};
