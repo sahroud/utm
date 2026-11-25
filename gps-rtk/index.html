@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102f43">
-<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.4.3">
+<meta name="description" content="سامانه برداشت و کنترل کیفیت نقشه‌برداری با گوشی و گیرنده GNSS"><meta name="sahroud-version" content="2.4.4">
 <link rel="manifest" href="./manifest.json">
 <link rel="preload" as="style" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript><title>SAHROUD RTK | برداشت هوشمند</title>
 <style>
@@ -31,7 +31,7 @@ table{border-collapse:collapse;width:100%;font-size:11px;display:block;overflow-
 .auto-capture-toast{position:fixed;z-index:9999;left:50%;top:18%;transform:translateX(-50%);background:#126b45;color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 5px 22px #0004;font-weight:bold;text-align:center;pointer-events:none;animation:autoToast 1s ease both}@keyframes autoToast{0%{opacity:0;transform:translate(-50%,-8px)}12%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}</style>
 <style>#selectedMap{height:430px;width:100%;border:1px solid var(--line);border-radius:10px;z-index:1;background:#eaf0f2}.map-coord{font:12px Tahoma;direction:ltr;text-align:left;line-height:1.7}.track-box{background:#f4f8fa;border:1px solid var(--line);padding:10px;border-radius:10px;margin-top:10px}</style><script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script></head>
 <body>
-<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill" id="versionPill">نسخه 2.4.3</span><div class="pill" id="connectionPill">در انتظار GPS</div></div></div></header>
+<header><div class="head"><div><div class="brand">SAHROUD RTK</div><div class="sub">سامانه هوشمند برداشت، کنترل کیفیت و محاسبات نقشه‌برداری</div></div><div style="display:flex;align-items:center;gap:7px"><span class="pill" id="versionPill">نسخه 2.4.4</span><div class="pill" id="connectionPill">در انتظار GPS</div></div></div></header>
 <main>
 <nav class="tabs">
 <button class="tab active" data-tab="survey">برداشت</button><button class="tab" data-tab="points">نقاط</button><button class="tab" data-tab="selected">نقاط انتخاب‌شده</button><button class="tab" data-tab="calc">محاسبات</button><button class="tab" data-tab="settings">تنظیمات</button>
@@ -193,7 +193,7 @@ const KEY='sahroud_rtk_pro_v1';
 let db={project:{name:'پروژه جدید',created:new Date().toISOString()},points:[],raw:[],settings:{}};
 let watch=null,latest=null,auto=false,trackActive=false,trackPaused=false,trackBatch=[],selectedTrackId=null,lastTrackSampleTime=0,lastTrackPointTime=0,trackMap=null,trackLine=null,trackMarkers=null,selectedMap=null,selectedMapLayers=null,serialPort=null,serialReader=null,serialBuffer='',serialFix=null,serialGst=null,orientation=null;
 let samples=[],stableSince=0,lastAutoSave=0,lastAccuracyAlarm=0,compassEnabled=false,lastTopoModel=null,audioContext=null,manualBatch=[],autoBatch=[],lastManualSampleTime=0,lastAutoSampleTime=0,tripletBusy=false;
-const APP_VERSION='2.4.3';
+const APP_VERSION='2.4.4';
 const defaultSettings={maxAcc:10,avgSeconds:3,autoDistance:2,autoInterval:5,maxAge:5,coordFormat:'decimal',serialBaud:9600,vibrate:true,sound:false,trackMode:'time',trackIntervalSec:1,trackDistanceM:2};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.points&&Array.isArray(x.points)){db=x;db.settings={...defaultSettings,...(db.settings||{}),avgSeconds:3};db.selectedPointIds=Array.isArray(db.selectedPointIds)?db.selectedPointIds.filter(id=>db.points.some(p=>p.id===id)):[];}}catch(e){}if(!Array.isArray(db.tracks))db.tracks=[];const pending=db.tracks.find(t=>t.status==='recording');if(pending){pending.status='paused';selectedTrackId=pending.id;}}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){$('quality').textContent='حافظه گوشی پر شده است؛ از پروژه خروجی پشتیبان بگیرید.';}}
@@ -460,7 +460,13 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function renderSelects(){const chosen=(db.selectedPointIds||[]).map(id=>db.points.find(p=>p.id===id)).filter(Boolean),source=chosen.length?chosen:db.points,ids=new Set(source.map(p=>p.id));['p1','p2','targetPoint','profileStart','profileEnd'].forEach(id=>{const el=$(id),old=el.value;el.innerHTML=source.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')||'<option value="">ابتدا نقطه ثبت کنید</option>';if(ids.has(old))el.value=old;});if(source.length>1&&$('p2').value===$('p1').value)$('p2').selectedIndex=1;}
 function selected(id){return db.points.find(p=>p.id===$(id).value);}
 function calcLine(){let a=selected('p1'),b=selected('p2');if(!a||!b)return;$('distance').textContent=num(distance(a,b),3)+' m';$('azimuth').textContent=num(bearing(a,b),2)+'°';}
-function toUtm(lat,lon,forcedZone=null){const a=6378137,e2=0.00669437999014,k0=.9996,zone=forcedZone===null?Math.floor((lon+180)/6)+1:forcedZone,lon0=(zone-1)*6-180+3,ep2=e2/(1-e2),phi=lat*Math.PI/180,lam=lon*Math.PI/180,lam0=lon0*Math.PI/180,N=a/Math.sqrt(1-e2*Math.sin(phi)**2),T=Math.tan(phi)**2,C=ep2*Math.cos(phi)**2,A=Math.cos(phi)*(lam-lam0),M=a*((1-e2/4-3*e2**2/64-5*e2**3/256)*phi-(3*e2/8+3*e2**2/32+45*e2**3/1024)*Math.sin(2*phi)+(15*e2**2/256+45*e2**3/1024)*Math.sin(4*phi)-(35*e2**3/3072)*Math.sin(6*phi));let E=500000+k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120);let north=k0*(M+N*Math.tan(phi)*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));if(lat<0)north+=10000000;return{zone,E,N:north,hem:lat>=0?'شمالی':'جنوبی'};}
+function toUtm(lat,lon,forcedZone=null){
+ const engine=window.SAHROUD_GNSS;
+ if(!engine||typeof engine.utmForward!=='function')throw new Error('هسته مرکزی تبدیل مختصات بارگذاری نشده است.');
+ const r=engine.utmForward(lat,lon,forcedZone);
+ if(!r.valid)throw new Error(r.warning||'تبدیل UTM ناموفق بود.');
+ return {zone:r.zone,E:r.easting,N:r.northing,hem:r.hemisphere==='N'?'شمالی':'جنوبی',hemisphere:r.hemisphere,epsg:r.epsg,warning:r.convergenceWarning};
+}
 function calcUtm(){let p=selected('p1');if(!p)return;let u=toUtm(p.lat,p.lon);$('zone').textContent=u.zone;$('east').textContent=num(u.E,3);$('north').textContent=num(u.N,3);$('hemisphere').textContent=u.hem;}
 function calcArea(){const ids=new Set(db.selectedPointIds||[]);let pts=(ids.size?db.points.filter(p=>ids.has(p.id)):db.points).filter(isBoundary);if(pts.length<3){alert('برای مساحت حداقل سه نقطه مرزی لازم است. نقاط غیرمرزی را از مرز خارج کنید.');return;}let lat0=pts.reduce((s,p)=>s+p.lat,0)/pts.length*Math.PI/180,lon0=pts.reduce((s,p)=>s+p.lon,0)/pts.length*Math.PI/180,R=6378137,xy=pts.map(p=>({x:R*(p.lon*Math.PI/180-lon0)*Math.cos(lat0),y:R*(p.lat*Math.PI/180-lat0)}));let area=0,per=0;for(let i=0;i<xy.length;i++){let a=xy[i],b=xy[(i+1)%xy.length];area+=a.x*b.y-b.x*a.y;per+=Math.hypot(b.x-a.x,b.y-a.y);}$('area').textContent=num(Math.abs(area/2),2)+' m²';$('perimeter').textContent=num(per,2)+' m';let rows=pts.map((p,i)=>{let q=pts[(i+1)%pts.length],d=distance(p,q),az=bearing(p,q);return '<tr><td>'+(i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(q.name)+'</td><td>'+num(d,2)+'</td><td>'+num(az,1)+'°</td></tr>';}).join('');$('boundaryDetails').innerHTML='<table><thead><tr><th>ضلع</th><th>از رأس</th><th>تا رأس</th><th>طول (m)</th><th>آزیموت</th></tr></thead><tbody>'+rows+'</tbody></table>';}
 function topoPoints(){const ids=new Set(db.selectedPointIds||[]),source=ids.size?db.points.filter(p=>ids.has(p.id)):db.points;return source.filter(p=>p.alt!==null&&p.alt!==''&&Number.isFinite(Number(p.alt))).map(p=>({p,z:Number(p.alt)}));}
