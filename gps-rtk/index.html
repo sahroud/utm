@@ -352,9 +352,9 @@ function drawTrackCharts(){
 }
 
 function drawLongitudinalAnalysis(){
- const t=currentTrack(),pts=t?.points||[],summary=$('trackGradeSummary'),info=$('trackGradeInfo'),table=$('trackBreakTable'),thresholdEl=$('trackBreakThreshold');
+ const t=currentTrack(),pts=t?.points||[],recordedSegments=trackSegments(t),summary=$('trackGradeSummary'),info=$('trackGradeInfo'),table=$('trackBreakTable'),thresholdEl=$('trackBreakThreshold');
  if(!summary||!info||!table)return;
- let cumulative=[0];for(let i=1;i<pts.length;i++)cumulative[i]=cumulative[i-1]+distance(pts[i-1],pts[i]);
+ let cumulative=Array(pts.length).fill(0),distanceOffset=0;recordedSegments.forEach(seg=>{for(let i=seg.from;i<seg.to;i++){if(i>seg.from)distanceOffset+=distance(pts[i-1],pts[i]);cumulative[i]=distanceOffset;}});
  const valid=[];pts.forEach((p,i)=>{const z=Number(p.alt);if(p.alt!==null&&p.alt!==''&&Number.isFinite(z))valid.push({i,z});});
  if(valid.length<2){
   summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع ابتدا تا انتها</small><strong>—</strong></div><div class="stat"><small>طول افقی مسیر</small><strong>—</strong></div><div class="stat"><small>شیب متوسط</small><strong>—</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong>۰</strong></div>';
@@ -365,11 +365,11 @@ function drawLongitudinalAnalysis(){
  const fmt=x=>Number.isFinite(x)?(x>0?'+':'')+x.toFixed(2):'—';
  summary.innerHTML='<div class="stat"><small>اختلاف ارتفاع ابتدا تا انتها</small><strong>'+fmt(rise)+' m</strong></div><div class="stat"><small>طول افقی مسیر</small><strong>'+run.toFixed(1)+' m</strong></div><div class="stat"><small>شیب متوسط</small><strong>'+fmt(avg)+' %</strong></div><div class="stat"><small>تعداد شکست شیب</small><strong id="trackBreakCount">۰</strong></div>';
  const segments=[];
- for(let i=1;i<pts.length;i++){
+ recordedSegments.forEach(part=>{for(let i=part.from+1;i<part.to;i++){
   const a=Number(pts[i-1].alt),b=Number(pts[i].alt),d=distance(pts[i-1],pts[i]);
   if(pts[i-1].alt===null||pts[i-1].alt===''||pts[i].alt===null||pts[i].alt===''||!Number.isFinite(a)||!Number.isFinite(b)||!Number.isFinite(d)||d<0.5)continue;
   segments.push({from:i,to:i+1,grade:(b-a)/d*100,dist:cumulative[i]});
- }
+ }});
  const threshold=Number(thresholdEl?.value||2),breaks=[];
  if(Number.isFinite(threshold)&&threshold>0)for(let i=1;i<segments.length;i++){
   const prev=segments[i-1],cur=segments[i],delta=cur.grade-prev.grade;
